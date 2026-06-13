@@ -27,7 +27,6 @@ jobs:
       - name: Build React app
         run: cd client && npm run build
 
-      # Copy built files into server/public/ so Express can serve them
       - name: Copy build to server/public
         run: |
           mkdir -p server/public
@@ -64,3 +63,19 @@ jobs:
             **/deploy*.yml
             **/*.xlsm
             **/*.xlsx
+
+      # ── SSH: install deps, migrate DB, seed admin user ───────────────────────
+      - name: Setup database & seed admin
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          script: |
+            cd ${{ secrets.APP_PATH }}/server
+            npm install --omit=dev
+            npx prisma generate
+            npx prisma db push --accept-data-loss
+            npm run seed
+            echo "✅ Database ready"
