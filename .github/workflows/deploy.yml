@@ -65,7 +65,11 @@ jobs:
             **/*.xlsm
             **/*.xlsx
 
-      # ── SSH: install deps, migrate DB, seed admin (uses cPanel Node venv) ─────
+      # ── SSH: install deps, migrate DB, seed admin ────────────────────────────
+      # IMPORTANT: Do NOT activate the nodevenv. Activation sets NODE_PATH to the
+      # nodevenv global lib (which may have a stale global Prisma version), causing
+      # require() to find the wrong version even after a clean local npm install.
+      # Instead, use the nodevenv node/npm binaries via absolute path only.
       - name: Setup database & seed admin
         uses: appleboy/ssh-action@v1.0.3
         continue-on-error: true
@@ -75,10 +79,25 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
           script: |
-            # Activate the cPanel Node.js virtualenv so the correct node/npm is used.
-            source $HOME/nodevenv/costing/server/*/bin/activate 2>/dev/null || true
             cd $HOME/costing/server
-            npm install
-            npm run setup
+
+            # Locate the nodevenv bin dir (provides the correct Node version).
+            NVENV_BIN=$(ls -d $HOME/nodevenv/costing/server/*/bin 2>/dev/null | tail -1)
+            NODE="$NVENV_BIN/node"
+            NPM="$NVENV_BIN/npm"
+            echo "Node: $($NODE --version 2>/dev/null)"
+            echo "NPM:  $($NPM  --version 2>/dev/null)"
+
+            # Force-remove stale Prisma packages so npm installs the version
+            # pinned in package-lock.json (v5) without using any cached binaries.
+            rm -rf node_modules/.prisma node_modules/prisma node_modules/@prisma node_modules/.bin/prisma
+
+            # Install locally (./node_modules). No NODE_PATH means no global interference.
+            "$NPM" install --no-audit --no-fund
+
+            # Run the one-shot setup: prisma generate + db push + seed admin.
+            # Prisma v5 uses a native binary engine — no WASM, no cPanel restrictions.
+            "$NODE" prisma/setup.js
+
             touch tmp/restart.txt
-            echo "Database ready"
+            echo "✅ Database setup complete"
