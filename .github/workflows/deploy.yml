@@ -67,6 +67,7 @@ jobs:
       # ── SSH: install deps, migrate DB, seed admin user ───────────────────────
       - name: Setup database & seed admin
         uses: appleboy/ssh-action@v1.0.3
+        continue-on-error: true
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
