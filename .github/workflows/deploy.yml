@@ -17,12 +17,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: client/package-lock.json
 
       # ── Build React client ──────────────────────────────────────────────────
+      # Use `npm install` (not `npm ci`): the Windows-generated lock file omits
+      # Linux platform binaries (rollup/esbuild native), which makes `npm ci`
+      # fail on the Ubuntu runner. `npm install` fetches the correct binaries.
       - name: Install client dependencies
-        run: cd client && npm ci
+        run: cd client && npm install --no-audit --no-fund
 
       - name: Build React app
         run: cd client && npm run build
