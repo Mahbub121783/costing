@@ -10,7 +10,8 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "setup": "node prisma/setup.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
