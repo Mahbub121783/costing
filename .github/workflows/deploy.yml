@@ -33,8 +33,17 @@ jobs:
           mkdir -p server/public
           cp -r client/dist/. server/public/
 
+      # ── Generate server/.env from GitHub Secrets ─────────────────────────────
+      - name: Create server .env
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > server/.env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> server/.env
+          echo "JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}" >> server/.env
+          echo "NODE_ENV=production" >> server/.env
+          echo "PORT=5000" >> server/.env
+          echo "CLIENT_URL=${{ secrets.CLIENT_URL }}" >> server/.env
+
       # ── Passenger restart trigger ────────────────────────────────────────────
-      # Touching this file makes cPanel/Passenger restart the Node.js app
       - name: Prepare Passenger restart trigger
         run: mkdir -p server/tmp && touch server/tmp/restart.txt
 
@@ -52,7 +61,6 @@ jobs:
             **/.git*/**
             **/node_modules/**
             client/**
-            **/.env
             **/deploy*.yml
             **/*.xlsm
             **/*.xlsx
