@@ -1,64 +1,59 @@
 /**
  * One-shot deployment setup for cPanel.
- * Run via cPanel Node.js App → "Run JS script" → type: prisma/setup.js
- * Or: npm run setup
+ * Run via SSH: node prisma/setup.js
+ *
+ * Does NOT use the Prisma CLI (prisma generate / prisma db push).
+ * cPanel CloudLinux blocks WebAssembly memory allocation which the Prisma CLI
+ * requires for schema parsing. Instead we:
+ *   1. Apply schema via raw SQL (pg module — pure JS, no WASM)
+ *   2. Seed the admin user via the pre-generated PrismaClient (no WASM)
  */
-const { execSync } = require('child_process');
 const path = require('path');
-const fs = require('fs');
+const fs   = require('fs');
 
 const serverDir = path.join(__dirname, '..');
-
-// Load .env first so DATABASE_URL is available to child processes
 require('dotenv').config({ path: path.join(serverDir, '.env') });
-
-// Use the LOCAL prisma binary (not npx which may find global/wrong version)
-const prismaBin = path.join(serverDir, 'node_modules', '.bin', 'prisma');
-const schemaPath = path.join(serverDir, 'prisma', 'schema.prisma');
-
-function run(cmd) {
-  console.log('\n▶ ' + cmd);
-  execSync(cmd, {
-    stdio: 'inherit',
-    cwd: serverDir,
-    env: { ...process.env },
-  });
-}
 
 (async () => {
   try {
-    if (!process.env.DATABASE_URL) {
-      throw new Error('DATABASE_URL is missing — check server/.env');
+    const DATABASE_URL = process.env.DATABASE_URL;
+    if (!DATABASE_URL) throw new Error('DATABASE_URL is missing — check server/.env');
+
+    // ── Step 1: Apply schema SQL ──────────────────────────────────────────────
+    console.log('\n── Step 1: Creating database tables ──');
+    const { Client } = require('pg');
+    const sql = fs.readFileSync(path.join(__dirname, 'create-tables.sql'), 'utf-8');
+
+    const pgClient = new Client({ connectionString: DATABASE_URL });
+    await pgClient.connect();
+    await pgClient.query(sql);
+    await pgClient.end();
+    console.log('✓ Tables created / already exist');
+
+    // ── Step 2: Seed admin user ────────────────────────────────────────────────
+    console.log('\n── Step 2: Seeding admin user ──');
+    const generatedPath = path.join(serverDir, 'generated');
+    if (!fs.existsSync(generatedPath)) {
+      throw new Error(
+        'server/generated/ not found.\n' +
+        'The Prisma Client must be generated on CI and deployed via FTP.\n' +
+        'Ensure the CI workflow ran successfully and the generated/ folder was uploaded.'
+      );
     }
 
-    if (!fs.existsSync(prismaBin)) {
-      throw new Error('Prisma binary not found at ' + prismaBin + ' — run npm install first');
-    }
-
-    console.log('Using schema:', schemaPath);
-    console.log('Database:', process.env.DATABASE_URL.replace(/:([^:@]+)@/, ':****@'));
-
-    // generate: build the Prisma Client from schema
-    run(`"${prismaBin}" generate --schema="${schemaPath}"`);
-
-    // db push: sync the schema to PostgreSQL (creates tables)
-    run(`"${prismaBin}" db push --accept-data-loss --schema="${schemaPath}"`);
-
-    console.log('\nSchema synced. Seeding admin user...');
-
-    const { PrismaClient } = require('@prisma/client');
+    const { PrismaClient } = require('../generated');
     const bcrypt = require('bcryptjs');
-    const prisma = new PrismaClient({ datasourceUrl: process.env.DATABASE_URL });
+    const prisma = new PrismaClient({ datasourceUrl: DATABASE_URL });
 
     const existing = await prisma.user.findUnique({ where: { email: 'admin@gcs.com' } });
     if (existing) {
-      console.log('Admin user already exists — skipping seed.');
+      console.log('✓ Admin user already exists — skipping seed.');
     } else {
       const passwordHash = await bcrypt.hash('Admin@GCS2024!', 12);
       await prisma.user.create({
         data: { name: 'GCS Admin', email: 'admin@gcs.com', passwordHash, role: 'ADMIN' },
       });
-      console.log('Admin user created: admin@gcs.com  /  password: Admin@GCS2024!');
+      console.log('✓ Admin user created: admin@gcs.com  /  Admin@GCS2024!');
     }
 
     await prisma.$disconnect();

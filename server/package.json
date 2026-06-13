@@ -11,9 +11,6 @@
     "seed": "node prisma/seed.js",
     "setup": "node prisma/setup.js"
   },
-  "prisma": {
-    "seed": "node prisma/seed.js"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -31,9 +28,10 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
     "multer": "^2.1.1",
-    "prisma": "^5.22.0"
+    "pg": "^8.11.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "prisma": "^5.22.0"
   }
 }

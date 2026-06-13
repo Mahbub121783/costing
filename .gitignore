@@ -6,6 +6,8 @@ server/node_modules/
 # Build output — generated fresh by CI/CD pipeline
 client/dist/
 server/public/
+# Prisma Client — generated on CI for Linux, deployed via FTP (not committed)
+server/generated/
 
 # Environment variables — NEVER commit secrets
 .env
