@@ -1,0 +1,35 @@
+name: Deploy Website
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: FTP Deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Local folder to deploy (the entire clean project)
+          local-dir: ./
+          # Target cPanel folder path (e.g. /home/tecnedub/repositories/knitadvisor/ or specific folder)
+          server-dir: ./costing/
+          # Optional: Delete old remote files not present in local repo
+          dangerous-clean-slate: true
+          # Files to exclude from upload and avoid deleting on the remote server
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            .env
+            backend/.env
+            backend/node_modules/**
+            database/backups/**

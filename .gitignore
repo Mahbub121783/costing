@@ -1,0 +1,37 @@
+# Dependencies — never commit these
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build output — generated fresh by CI/CD pipeline
+client/dist/
+server/public/
+
+# Environment variables — NEVER commit secrets
+.env
+.env.local
+.env.*.local
+server/.env
+client/.env
+
+# User uploaded files
+server/uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Excel OCS files (too large for git)
+*.xlsm
+*.xlsx
+
+# Misc
+*.tsbuildinfo

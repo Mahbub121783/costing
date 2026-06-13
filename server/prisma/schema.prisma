@@ -1,0 +1,468 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  MERCHANDISER
+  VIEWER
+}
+
+enum CostingStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum CmMode {
+  SMV_BASED
+  DIRECT_RATE
+}
+
+enum FreightMode {
+  SEA
+  AIR
+  ROAD
+  COURIER
+}
+
+enum FreightUnit {
+  PER_CBM
+  PER_KG
+  PER_PIECE
+  LUMP_SUM
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         UserRole @default(MERCHANDISER)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  buyers        Buyer[]
+  factories     Factory[]
+  fabricLibrary FabricLibrary[]
+  trimLibrary   TrimLibrary[]
+  styles        Style[]
+  costings      Costing[]
+  auditLogs     CostingAuditLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique @db.VarChar(512)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ─── MASTERS ──────────────────────────────────────────────────────────────────
+
+model Buyer {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique @db.VarChar(200)
+  country     String?  @db.VarChar(100)
+  contactName String?  @map("contact_name") @db.VarChar(100)
+  email       String?  @db.VarChar(255)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  creator User    @relation(fields: [createdBy], references: [id])
+  styles  Style[]
+
+  @@index([name])
+  @@map("buyers")
+}
+
+model Factory {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(200)
+  country   String?  @db.VarChar(100)
+  address   String?  @db.Text
+  isActive  Boolean  @default(true) @map("is_active")
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  creator User    @relation(fields: [createdBy], references: [id])
+  styles  Style[]
+
+  @@index([name])
+  @@map("factories")
+}
+
+// ─── LIBRARY ──────────────────────────────────────────────────────────────────
+
+model FabricLibrary {
+  id                 String   @id @default(uuid()) @db.Uuid
+  name               String   @db.VarChar(200)
+  fabricationDetail  String?  @map("fabrication_detail") @db.VarChar(300)
+  composition        String?  @db.VarChar(200)
+  gsm                Decimal? @db.Decimal(8, 2)
+  supplier           String?  @db.VarChar(200)
+  // Yarn-based fields
+  yarnCount          String?  @map("yarn_count") @db.VarChar(100)
+  yarnPricePerKg     Decimal? @map("yarn_price_per_kg") @db.Decimal(10, 4)
+  spandexPriceKg     Decimal? @map("spandex_price_kg") @db.Decimal(10, 4)
+  spandexPercentage  Decimal? @map("spandex_percentage") @db.Decimal(5, 4)
+  yarnDyeingCost     Decimal? @map("yarn_dyeing_cost") @db.Decimal(10, 4)
+  knittingCost       Decimal? @map("knitting_cost") @db.Decimal(10, 4)
+  dyeingFinishing    Decimal? @map("dyeing_finishing") @db.Decimal(10, 4)
+  aopFinishing       Decimal? @map("aop_finishing") @db.Decimal(10, 4)
+  wastagePct         Decimal? @map("wastage_pct") @db.Decimal(5, 4)
+  // Direct price option
+  isDirectPrice      Boolean  @default(false) @map("is_direct_price")
+  directPricePerKg   Decimal? @map("direct_price_per_kg") @db.Decimal(10, 4)
+  isActive           Boolean  @default(true) @map("is_active")
+  createdBy          String   @map("created_by") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  creator User                 @relation(fields: [createdBy], references: [id])
+  shells  CostingFabricShell[]
+
+  @@index([name])
+  @@map("fabric_library")
+}
+
+model TrimLibrary {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @db.VarChar(200)
+  category   String?  @db.VarChar(100)
+  unit       String?  @db.VarChar(50)
+  unitPrice  Decimal? @map("unit_price") @db.Decimal(10, 4)
+  supplier   String?  @db.VarChar(200)
+  isActive   Boolean  @default(true) @map("is_active")
+  createdBy  String   @map("created_by") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  creator User          @relation(fields: [createdBy], references: [id])
+  trims   CostingTrim[]
+
+  @@index([name])
+  @@map("trim_library")
+}
+
+// ─── STYLE ────────────────────────────────────────────────────────────────────
+
+model Style {
+  id          String   @id @default(uuid()) @db.Uuid
+  styleNo     String   @unique @map("style_no") @db.VarChar(100)
+  description String   @db.VarChar(500)
+  buyerId     String?  @map("buyer_id") @db.Uuid
+  factoryId   String?  @map("factory_id") @db.Uuid
+  department  String?  @db.VarChar(100)
+  category    String?  @db.VarChar(100)
+  season      String?  @db.VarChar(50)
+  imageUrl    String?  @map("image_url") @db.VarChar(500)
+  packOf      Int      @default(1) @map("pack_of")
+  // Declared sizes as ordered array, e.g. ["3Y-6Y","7Y-10Y","11Y-14Y","15Y-16Y"]
+  sizes       String[] @default([])
+  isActive    Boolean  @default(true) @map("is_active")
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  buyer     Buyer?    @relation(fields: [buyerId], references: [id])
+  factory   Factory?  @relation(fields: [factoryId], references: [id])
+  creator   User      @relation(fields: [createdBy], references: [id])
+  costings  Costing[]
+
+  @@index([styleNo])
+  @@index([buyerId])
+  @@map("styles")
+}
+
+// ─── COSTING ──────────────────────────────────────────────────────────────────
+
+model Costing {
+  id           String        @id @default(uuid()) @db.Uuid
+  styleId      String        @map("style_id") @db.Uuid
+  version      Int           @default(1)
+  versionLabel String?       @map("version_label") @db.VarChar(100)
+  status       CostingStatus @default(DRAFT)
+  fromUser     String?       @map("from_user") @db.VarChar(100)
+  toPerson     String?       @map("to_person") @db.VarChar(100)
+  costingDate  DateTime?     @map("costing_date") @db.Date
+  notes        String?       @db.Text
+  targetFob    Decimal?      @map("target_fob") @db.Decimal(10, 4)
+  isLocked     Boolean       @default(false) @map("is_locked")
+  createdBy    String        @map("created_by") @db.Uuid
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  style          Style                @relation(fields: [styleId], references: [id])
+  creator        User                 @relation(fields: [createdBy], references: [id])
+  fabricShells   CostingFabricShell[]
+  trims          CostingTrim[]
+  cm             CostingCm?
+  packaging      CostingPackaging[]
+  embellishments CostingEmbellishment[]
+  washes         CostingWash[]
+  testing        CostingTesting?
+  commercial     CostingCommercial?
+  shipment       CostingShipment?
+  auditLogs      CostingAuditLog[]
+
+  @@unique([styleId, version])
+  @@index([styleId])
+  @@index([status])
+  @@map("costings")
+}
+
+// ─── FABRIC SHELLS ────────────────────────────────────────────────────────────
+
+model CostingFabricShell {
+  id                 String   @id @default(uuid()) @db.Uuid
+  costingId          String   @map("costing_id") @db.Uuid
+  shellOrder         Int      @map("shell_order")
+  shellName          String?  @map("shell_name") @db.VarChar(100)
+  application        String?  @db.VarChar(200)
+  mill               String?  @db.VarChar(200)
+  fabricationDetail  String?  @map("fabrication_detail") @db.VarChar(300)
+  fabricLibraryId    String?  @map("fabric_library_id") @db.Uuid
+
+  // Fabric price mode
+  isDirectPrice      Boolean  @default(false) @map("is_direct_price")
+
+  // Mode A: Yarn-based inputs
+  yarnCount          String?  @map("yarn_count") @db.VarChar(100)
+  yarnPricePerKg     Decimal? @map("yarn_price_per_kg") @db.Decimal(10, 4)
+  spandexPriceKg     Decimal? @map("spandex_price_kg") @db.Decimal(10, 4)
+  spandexPct         Decimal? @map("spandex_pct") @db.Decimal(5, 4)
+  yarnDyeingCost     Decimal? @map("yarn_dyeing_cost") @db.Decimal(10, 4)
+  knittingCost       Decimal? @map("knitting_cost") @db.Decimal(10, 4)
+  dyeingFinishing    Decimal? @map("dyeing_finishing") @db.Decimal(10, 4)
+  aopFinishing       Decimal? @map("aop_finishing") @db.Decimal(10, 4)
+  wastagePct         Decimal? @map("wastage_pct") @db.Decimal(5, 4)
+
+  // Mode B: Direct price
+  directPricePerKg   Decimal? @map("direct_price_per_kg") @db.Decimal(10, 4)
+
+  // Final resolved fabric price/kg (set by app logic)
+  fabricPricePerKg   Decimal? @map("fabric_price_per_kg") @db.Decimal(10, 4)
+
+  // CAD consumption per size — {"3Y-6Y": 0.323, "7Y-10Y": 0.408, ...}
+  consumptionPerSize Json     @default("{}") @map("consumption_per_size")
+
+  // Calculated cost per size — {"3Y-6Y": 2.174, ...}
+  costPerSize        Json     @default("{}") @map("cost_per_size")
+
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  costing       Costing        @relation(fields: [costingId], references: [id], onDelete: Cascade)
+  fabricLibrary FabricLibrary? @relation(fields: [fabricLibraryId], references: [id])
+
+  @@index([costingId])
+  @@map("costing_fabric_shells")
+}
+
+// ─── TRIMS ────────────────────────────────────────────────────────────────────
+
+model CostingTrim {
+  id             String   @id @default(uuid()) @db.Uuid
+  costingId      String   @map("costing_id") @db.Uuid
+  trimLibraryId  String?  @map("trim_library_id") @db.Uuid
+  itemName       String   @map("item_name") @db.VarChar(200)
+  category       String?  @db.VarChar(100)
+  unit           String?  @db.VarChar(50)
+  ratePerUnit    Decimal? @map("rate_per_unit") @db.Decimal(10, 4)
+  qtyPerGarment  Decimal? @map("qty_per_garment") @db.Decimal(10, 4)
+  isSizeSpecific Boolean  @default(false) @map("is_size_specific")
+  // Cost per size — {"XS": 0.175, "S": 0.175, ...} (auto-filled from qty×rate or manually per-size)
+  costPerSize    Json     @default("{}") @map("cost_per_size")
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  costing     Costing      @relation(fields: [costingId], references: [id], onDelete: Cascade)
+  trimLibrary TrimLibrary? @relation(fields: [trimLibraryId], references: [id])
+
+  @@index([costingId])
+  @@map("costing_trims")
+}
+
+// ─── CM ───────────────────────────────────────────────────────────────────────
+
+model CostingCm {
+  id               String  @id @default(uuid()) @db.Uuid
+  costingId        String  @unique @map("costing_id") @db.Uuid
+  cmMode           CmMode  @default(DIRECT_RATE) @map("cm_mode")
+  // SMV-based
+  smv              Decimal? @db.Decimal(8, 2)
+  lineEfficiency   Decimal? @map("line_efficiency") @db.Decimal(5, 4)
+  workerWageDay    Decimal? @map("worker_wage_day") @db.Decimal(10, 4)
+  workingMinsDay   Int?     @default(480) @map("working_mins_day")
+  // Direct rate
+  directCmRate     Decimal? @map("direct_cm_rate") @db.Decimal(10, 4)
+  // Overhead and compliance on top of base CM
+  overheadPct      Decimal? @default(0) @map("overhead_pct") @db.Decimal(5, 4)
+  compliancePct    Decimal? @default(0) @map("compliance_pct") @db.Decimal(5, 4)
+  // CM per size — can override global rate for specific sizes
+  cmTopPerSize     Json     @default("{}") @map("cm_top_per_size")
+  cmBottomPerSize  Json     @default("{}") @map("cm_bottom_per_size")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  costing Costing @relation(fields: [costingId], references: [id], onDelete: Cascade)
+
+  @@map("costing_cm")
+}
+
+// ─── PACKAGING ────────────────────────────────────────────────────────────────
+
+model CostingPackaging {
+  id          String   @id @default(uuid()) @db.Uuid
+  costingId   String   @map("costing_id") @db.Uuid
+  itemName    String   @map("item_name") @db.VarChar(200)
+  costPerSize Json     @default("{}") @map("cost_per_size")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  costing Costing @relation(fields: [costingId], references: [id], onDelete: Cascade)
+
+  @@index([costingId])
+  @@map("costing_packaging")
+}
+
+// ─── EMBELLISHMENT ────────────────────────────────────────────────────────────
+
+model CostingEmbellishment {
+  id          String   @id @default(uuid()) @db.Uuid
+  costingId   String   @map("costing_id") @db.Uuid
+  name        String   @db.VarChar(200)
+  costPerSize Json     @default("{}") @map("cost_per_size")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  costing Costing @relation(fields: [costingId], references: [id], onDelete: Cascade)
+
+  @@index([costingId])
+  @@map("costing_embellishments")
+}
+
+// ─── WASH ─────────────────────────────────────────────────────────────────────
+
+model CostingWash {
+  id          String   @id @default(uuid()) @db.Uuid
+  costingId   String   @map("costing_id") @db.Uuid
+  washType    String   @map("wash_type") @db.VarChar(200)
+  costPerSize Json     @default("{}") @map("cost_per_size")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  costing Costing @relation(fields: [costingId], references: [id], onDelete: Cascade)
+
+  @@index([costingId])
+  @@map("costing_wash")
+}
+
+// ─── TESTING ──────────────────────────────────────────────────────────────────
+
+model CostingTesting {
+  id          String   @id @default(uuid()) @db.Uuid
+  costingId   String   @unique @map("costing_id") @db.Uuid
+  costPerSize Json     @default("{}") @map("cost_per_size")
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  costing Costing @relation(fields: [costingId], references: [id], onDelete: Cascade)
+
+  @@map("costing_testing")
+}
+
+// ─── COMMERCIAL ───────────────────────────────────────────────────────────────
+
+model CostingCommercial {
+  id                  String   @id @default(uuid()) @db.Uuid
+  costingId           String   @unique @map("costing_id") @db.Uuid
+  buyingHouseCommPct  Decimal  @default(0) @map("buying_house_comm_pct") @db.Decimal(5, 4)
+  factoryCommPct      Decimal  @default(0) @map("factory_comm_pct") @db.Decimal(5, 4)
+  profitMarginPct     Decimal  @default(0) @map("profit_margin_pct") @db.Decimal(5, 4)
+  // Extra flexible charges [{label: "Bank Charge", pct: 0.005}]
+  otherCharges        Json     @default("[]") @map("other_charges")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  costing Costing @relation(fields: [costingId], references: [id], onDelete: Cascade)
+
+  @@map("costing_commercial")
+}
+
+// ─── SHIPMENT ─────────────────────────────────────────────────────────────────
+
+model CostingShipment {
+  id                String      @id @default(uuid()) @db.Uuid
+  costingId         String      @unique @map("costing_id") @db.Uuid
+  // Order quantity per size — {"3Y-6Y": 500, "7Y-10Y": 1000, ...}
+  orderQtyPerSize   Json        @default("{}") @map("order_qty_per_size")
+  totalQty          Int?        @map("total_qty")
+  pcsPerCarton      Int?        @map("pcs_per_carton")
+  cartonCbm         Decimal?    @map("carton_cbm") @db.Decimal(8, 4)
+  cartonGwKg        Decimal?    @map("carton_gw_kg") @db.Decimal(8, 2)
+  freightMode       FreightMode @default(SEA) @map("freight_mode")
+  freightRateUsd    Decimal?    @map("freight_rate_usd") @db.Decimal(10, 4)
+  freightUnit       FreightUnit @default(PER_CBM) @map("freight_unit")
+  insurancePct      Decimal     @default(0) @map("insurance_pct") @db.Decimal(5, 4)
+  importDutyPct     Decimal     @default(0) @map("import_duty_pct") @db.Decimal(5, 4)
+  // Calculated results
+  totalCartons      Int?        @map("total_cartons")
+  totalCbm          Decimal?    @map("total_cbm") @db.Decimal(10, 4)
+  freightPerPiece   Decimal?    @map("freight_per_piece") @db.Decimal(10, 4)
+  // Landed cost per size — {"3Y-6Y": 6.08, ...}
+  landedCostPerSize Json        @default("{}") @map("landed_cost_per_size")
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  costing Costing @relation(fields: [costingId], references: [id], onDelete: Cascade)
+
+  @@map("costing_shipment")
+}
+
+// ─── AUDIT LOG ────────────────────────────────────────────────────────────────
+
+model CostingAuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  costingId  String   @map("costing_id") @db.Uuid
+  changedBy  String   @map("changed_by") @db.Uuid
+  changedAt  DateTime @default(now()) @map("changed_at") @db.Timestamptz
+  action     String   @db.VarChar(50)
+  fieldName  String?  @map("field_name") @db.VarChar(100)
+  oldValue   String?  @map("old_value") @db.Text
+  newValue   String?  @map("new_value") @db.Text
+
+  costing   Costing @relation(fields: [costingId], references: [id], onDelete: Cascade)
+  changedByUser User @relation(fields: [changedBy], references: [id])
+
+  @@index([costingId])
+  @@index([changedAt])
+  @@map("costing_audit_log")
+}

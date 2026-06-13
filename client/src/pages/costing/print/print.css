@@ -1,0 +1,179 @@
+/* ── OCS Print Styles ───────────────────────────── */
+.ocs-sheet {
+  font-family: 'Calibri', 'Arial', sans-serif;
+  font-size: 10px;
+  color: #1a1a1a;
+  background: #fff;
+  padding: 12mm 10mm;
+  max-width: 297mm;
+  margin: 0 auto;
+}
+
+/* Header */
+.ocs-company {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a3a6b;
+  text-align: center;
+  letter-spacing: 2px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #1a3a6b;
+  margin-bottom: 8px;
+}
+
+.ocs-meta-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+}
+.ocs-meta-table td { padding: 2px 6px; }
+.ocs-meta-label { font-weight: 700; color: #444; white-space: nowrap; width: 80px; }
+.ocs-meta-val { color: #111; }
+
+/* Section titles */
+.ocs-section-title {
+  background: #1a3a6b;
+  color: #fff;
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* Shell block */
+.ocs-shell-block { margin-bottom: 6px; }
+.ocs-shell-title {
+  background: #e8edf5;
+  font-weight: 700;
+  font-size: 9px;
+  padding: 3px 8px;
+  color: #1a3a6b;
+  border-left: 3px solid #1a3a6b;
+}
+
+/* Tables */
+.ocs-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2px;
+}
+.ocs-table .mt-1 { margin-top: 2px; }
+
+.ocs-th {
+  background: #d6e0f0;
+  color: #1a3a6b;
+  font-weight: 700;
+  font-size: 8.5px;
+  padding: 3px 6px;
+  border: 1px solid #b0bfd8;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ocs-row td, .ocs-row-bold td, .ocs-row-subtotal td, .ocs-row-highlight td, .ocs-row-fob td {
+  border: 1px solid #dde5f0;
+  padding: 2.5px 6px;
+}
+
+.ocs-label, .ocs-label-fob { text-align: left; white-space: nowrap; }
+.ocs-value, .ocs-value-fob { text-align: right; font-family: 'Courier New', monospace; white-space: nowrap; }
+
+/* Row variants */
+.ocs-row { background: #fff; }
+.ocs-row:nth-child(even) { background: #f7f9fd; }
+.ocs-row-bold { background: #eef2fa; font-weight: 700; }
+.ocs-row-bold td { border: 1px solid #c0cfe8; }
+.ocs-row-subtotal { background: #dce6f5; font-weight: 700; }
+.ocs-row-subtotal td { border: 1px solid #b0c4e0; }
+.ocs-row-highlight { background: #cfe2ff; font-weight: 700; }
+.ocs-row-highlight td { border: 1px solid #7aabdf; }
+
+.ocs-row-fob { background: #155f2d; }
+.ocs-row-fob td { border: 1px solid #0e4020; color: #fff; font-weight: 800; font-size: 11px; }
+.ocs-label-fob { color: #fff; font-weight: 800; }
+.ocs-value-fob { color: #fff; font-weight: 800; font-family: 'Courier New', monospace; }
+
+.ocs-highlight { background: #fffbe6 !important; color: #8b5e00 !important; font-weight: 700; }
+.ocs-summary-label { min-width: 200px; }
+
+.ocs-total-row-table { margin-top: 2px; }
+
+/* Shipment */
+.ocs-shipment-meta {
+  display: flex;
+  gap: 20px;
+  padding: 5px 8px;
+  background: #f0f4fa;
+  border: 1px solid #c8d6ec;
+  font-size: 9px;
+  color: #444;
+  margin-top: 4px;
+}
+.ocs-shipment-meta strong { color: #1a3a6b; }
+
+/* Notes */
+.ocs-notes {
+  margin-top: 10px;
+  padding: 6px 8px;
+  background: #fffbe6;
+  border: 1px solid #f0d97a;
+  font-size: 9px;
+  color: #555;
+  border-radius: 2px;
+}
+
+/* Footer */
+.ocs-footer {
+  margin-top: 14px;
+  padding-top: 6px;
+  border-top: 1px solid #ccc;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  color: #888;
+}
+
+.ocs-note {
+  font-size: 8px;
+  color: #666;
+  font-weight: 400;
+}
+
+/* ── Print media ──────────────────────────────────── */
+@media print {
+  .no-print { display: none !important; }
+
+  body { margin: 0; background: #fff; }
+
+  .ocs-sheet {
+    padding: 8mm 8mm;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .ocs-row-fob td {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .ocs-section-title {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .ocs-shell-title, .ocs-th, .ocs-row-bold td, .ocs-row-subtotal td, .ocs-row-highlight td {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 8mm 8mm;
+  }
+
+  .ocs-table { page-break-inside: avoid; }
+  .ocs-shell-block { page-break-inside: avoid; }
+}
