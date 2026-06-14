@@ -110,13 +110,20 @@ jobs:
             echo "Node: $($NODE --version 2>/dev/null)"
             echo "NPM:  $($NPM  --version 2>/dev/null)"
 
+            # IMPORTANT: every step below is guarded with `|| echo ...` so a
+            # failure NEVER aborts the script before the restart trigger. The
+            # Passenger restart is the critical part for picking up new code —
+            # if npm install or db setup fails, we still MUST restart so the
+            # freshly FTP-deployed source files take effect.
+
             # Install production deps only (--omit=dev skips the prisma CLI).
-            # Without the prisma CLI, @prisma/client postinstall skips generate.
-            # No prisma CLI = no WASM = no cPanel LVE memory error.
-            "$NPM" install --omit=dev --no-audit --no-fund
+            "$NPM" install --omit=dev --no-audit --no-fund || echo "⚠ npm install had issues — continuing to restart"
 
-            # Apply schema SQL + seed admin (uses pg module + server/generated/).
-            "$NODE" prisma/setup.js
+            # Apply schema SQL + seed admin (idempotent — safe to re-run).
+            "$NODE" prisma/setup.js || echo "⚠ db setup skipped/failed — continuing to restart"
 
+            # ALWAYS restart Passenger so the new code is loaded. This runs
+            # unconditionally even if the steps above failed.
+            mkdir -p tmp
             touch tmp/restart.txt
-            echo "✅ Database setup complete"
+            echo "✅ Passenger restart triggered ($(date))"
