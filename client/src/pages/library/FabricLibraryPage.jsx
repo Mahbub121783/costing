@@ -43,9 +43,12 @@ export default function FabricLibraryPage() {
   };
 
   const del = async (id) => {
-    await api.delete(`/fabric-library/${id}`);
-    toast.success('Removed');
-    load();
+    if (!confirm('Remove this fabric from library?')) return;
+    try {
+      await api.delete(`/fabric-library/${id}`);
+      toast.success('Removed from library');
+      load();
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to remove'); }
   };
 
   return (

@@ -10,6 +10,7 @@ router.use(protect);
 router.post('/', ctrl.create);
 router.get('/:id', ctrl.getOne);
 router.put('/:id/header', ctrl.updateHeader);
+router.delete('/:id', ctrl.deleteCosting);
 
 // Clone to new version
 router.post('/:id/clone', ctrl.cloneCosting);

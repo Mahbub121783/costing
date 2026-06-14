@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Plus, FileText, ChevronRight, Copy, Printer, Upload, Image, X } from 'lucide-react';
+import { Plus, FileText, ChevronRight, Copy, Printer, Upload, Image, X, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../lib/api';
 
@@ -34,6 +34,24 @@ export default function StyleDetail() {
     } finally { setCreating(false); }
   };
 
+  const deleteStyle = async () => {
+    if (!confirm(`Delete style "${style.styleNo}"? This will hide it from all lists.`)) return;
+    try {
+      await api.delete(`/styles/${id}`);
+      toast.success('Style removed');
+      navigate('/styles');
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to delete style'); }
+  };
+
+  const deleteCosting = async (costingId, version) => {
+    if (!confirm(`Delete costing v${version}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/costings/${costingId}`);
+      toast.success(`Costing v${version} deleted`);
+      load();
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to delete costing'); }
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -58,7 +76,8 @@ export default function StyleDetail() {
     );
   }
 
-  const imageUrl = style.imageUrl ? `http://localhost:5000${style.imageUrl}` : null;
+  // Use relative URL — in production both app and /uploads are served from same Express server
+  const imageUrl = style.imageUrl || null;
 
   return (
     <div className="space-y-5 max-w-5xl">
@@ -121,9 +140,14 @@ export default function StyleDetail() {
           </div>
         </div>
 
-        <button onClick={createCosting} disabled={creating} className="btn-primary flex-shrink-0">
-          <Plus size={15} /> {creating ? 'Creating…' : 'New Costing'}
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button onClick={createCosting} disabled={creating} className="btn-primary">
+            <Plus size={15} /> {creating ? 'Creating…' : 'New Costing'}
+          </button>
+          <button onClick={deleteStyle} className="btn-danger btn-sm" title="Delete this style">
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Style info card */}
@@ -219,6 +243,15 @@ export default function StyleDetail() {
                           >
                             <Copy size={11} />
                           </button>
+                          {c.status === 'DRAFT' && (
+                            <button
+                              className="btn-xs text-red-400 hover:text-red-600 hover:bg-red-50 rounded px-1.5"
+                              title="Delete this draft"
+                              onClick={() => deleteCosting(c.id, c.version)}
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

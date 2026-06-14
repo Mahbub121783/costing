@@ -23,10 +23,12 @@ export default function StyleNew() {
   const { register, handleSubmit, formState: { errors } } = useForm();
 
   useEffect(() => {
-    Promise.all([api.get('/buyers'), api.get('/factories')]).then(([b, f]) => {
-      setBuyers(b.data.data);
-      setFactories(f.data.data);
-    }).catch(() => {});
+    Promise.all([api.get('/buyers'), api.get('/factories')])
+      .then(([b, f]) => {
+        setBuyers(b.data.data);
+        setFactories(f.data.data);
+      })
+      .catch(() => toast.error('Failed to load buyers/factories'));
   }, []);
 
   const toggleSize = (s) => setSizes((prev) =>

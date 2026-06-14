@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Layers, ChevronRight, LayoutGrid } from 'lucide-react';
+import { Plus, Search, Layers, ChevronRight, LayoutGrid, Trash2 } from 'lucide-react';
 import api from '../../lib/api';
 import toast from 'react-hot-toast';
 
@@ -33,6 +33,15 @@ export default function StyleList() {
       setStyles(data.data || []);
     } catch { toast.error('Failed to load styles'); }
     finally { setLoading(false); }
+  };
+
+  const del = async (id, styleNo) => {
+    if (!confirm(`Delete style "${styleNo}"? This will hide it from all lists.`)) return;
+    try {
+      await api.delete(`/styles/${id}`);
+      toast.success('Style removed');
+      load();
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to delete style'); }
   };
 
   useEffect(() => { load(); }, [search]);
@@ -169,12 +178,21 @@ export default function StyleList() {
                       {new Date(s.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
                     <td>
-                      <Link
-                        to={`/styles/${s.id}`}
-                        className="btn-secondary btn-xs flex items-center gap-1"
-                      >
-                        Open <ChevronRight size={12} />
-                      </Link>
+                      <div className="flex items-center gap-1">
+                        <Link
+                          to={`/styles/${s.id}`}
+                          className="btn-secondary btn-xs flex items-center gap-1"
+                        >
+                          Open <ChevronRight size={12} />
+                        </Link>
+                        <button
+                          onClick={() => del(s.id, s.styleNo)}
+                          className="text-slate-300 hover:text-red-500 transition-colors p-1 rounded"
+                          title="Delete style"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

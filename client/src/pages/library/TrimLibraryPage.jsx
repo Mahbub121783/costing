@@ -22,6 +22,15 @@ export default function TrimLibraryPage() {
 
   useEffect(() => { load(); }, [search, category]);
 
+  const del = async (id) => {
+    if (!confirm('Remove this trim from library?')) return;
+    try {
+      await api.delete(`/trim-library/${id}`);
+      toast.success('Removed from library');
+      load();
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to remove'); }
+  };
+
   const save = async () => {
     try {
       if (editing) { await api.put(`/trim-library/${editing}`, form); toast.success('Updated'); }
@@ -100,7 +109,7 @@ export default function TrimLibraryPage() {
                   <td>{t.supplier || '—'}</td>
                   <td className="flex gap-2">
                     <button onClick={() => { setForm({ name: t.name, category: t.category || '', unit: t.unit || 'Pc', unitPrice: t.unitPrice || '', supplier: t.supplier || '' }); setEditing(t.id); setShowForm(true); }} className="text-gray-400 hover:text-blue-500"><Pencil size={14} /></button>
-                    <button onClick={async () => { await api.delete(`/trim-library/${t.id}`); toast.success('Removed'); load(); }} className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+                    <button onClick={() => del(t.id)} className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
                   </td>
                 </tr>
               ))}

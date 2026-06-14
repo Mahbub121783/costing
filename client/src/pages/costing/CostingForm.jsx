@@ -220,8 +220,11 @@ export default function CostingForm() {
               )}
             </div>
             <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-400 flex-wrap">
-              {costing.style?.buyer && (
-                <span>Buyer: <span className="text-slate-600 font-medium">{costing.style.buyer}</span></span>
+              {costing.style?.buyer?.name && (
+                <span>Buyer: <span className="text-slate-600 font-medium">{costing.style.buyer.name}</span></span>
+              )}
+              {costing.style?.factory?.name && (
+                <span>Factory: <span className="text-slate-600 font-medium">{costing.style.factory.name}</span></span>
               )}
               <span>Sizes: <span className="font-mono text-slate-600">{sizes.join(' · ')}</span></span>
               {costing.fromUser && <span>From: <span className="text-slate-600">{costing.fromUser}</span></span>}

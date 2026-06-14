@@ -26,6 +26,15 @@ export default function FactoriesPage() {
     } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
   };
 
+  const del = async (id, name) => {
+    if (!confirm(`Deactivate factory "${name}"?`)) return;
+    try {
+      await api.delete(`/factories/${id}`);
+      toast.success('Factory removed');
+      load();
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to remove factory'); }
+  };
+
   return (
     <div className="space-y-5 max-w-3xl">
       <div className="flex items-center justify-between">
@@ -69,8 +78,9 @@ export default function FactoriesPage() {
                 <td className="font-medium">{f.name}</td>
                 <td>{f.country || '—'}</td>
                 <td className="max-w-xs truncate text-xs text-gray-500">{f.address || '—'}</td>
-                <td>
+                <td className="flex gap-2">
                   <button onClick={() => { setForm({ name: f.name, country: f.country || '', address: f.address || '' }); setEditing(f.id); setShowForm(true); }} className="text-gray-400 hover:text-blue-500"><Pencil size={14} /></button>
+                  <button onClick={() => del(f.id, f.name)} className="text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
                 </td>
               </tr>
             ))}

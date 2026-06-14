@@ -27,6 +27,7 @@ const getAll = async (req, res) => {
         buyer: { select: { id: true, name: true } },
         factory: { select: { id: true, name: true } },
         _count: { select: { costings: true } },
+        costings: { orderBy: { version: 'desc' }, take: 1, select: { status: true } },
       },
     }),
   ]);

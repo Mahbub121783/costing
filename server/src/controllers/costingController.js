@@ -9,7 +9,17 @@ const {
 
 // Full costing include helper
 const fullCostingInclude = {
-  style: { select: { id: true, styleNo: true, description: true, sizes: true, packOf: true } },
+  style: {
+    select: {
+      id: true,
+      styleNo: true,
+      description: true,
+      sizes: true,
+      packOf: true,
+      buyer: { select: { name: true } },
+      factory: { select: { name: true } },
+    },
+  },
   fabricShells: { orderBy: { shellOrder: 'asc' } },
   trims: { orderBy: { sortOrder: 'asc' } },
   cm: true,
@@ -436,6 +446,17 @@ const cloneCosting = async (req, res) => {
   res.status(201).json({ success: true, data: newCosting });
 };
 
+// ── Delete costing (DRAFT only) ───────────────────────────────────────────────
+const deleteCosting = async (req, res) => {
+  const costing = await prisma.costing.findUniqueOrThrow({ where: { id: req.params.id } });
+  if (costing.status !== 'DRAFT') {
+    res.status(400);
+    throw new Error('Only DRAFT costings can be deleted');
+  }
+  await prisma.costing.delete({ where: { id: req.params.id } });
+  res.json({ success: true, message: 'Costing deleted' });
+};
+
 // ── Helper ────────────────────────────────────────────────────────────────────
 const logAudit = async (costingId, userId, action, fieldName, oldValue, newValue) => {
   await prisma.costingAuditLog.create({
@@ -447,6 +468,7 @@ module.exports = {
   create,
   getOne,
   updateHeader,
+  deleteCosting,
   upsertShell,
   deleteShell,
   saveTrims,
