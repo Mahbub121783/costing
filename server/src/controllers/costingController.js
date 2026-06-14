@@ -94,6 +94,14 @@ const updateHeader = async (req, res) => {
 };
 
 // ── Fabric Shells ─────────────────────────────────────────────────────────────
+// Coerce a value to a number or null — Prisma Decimal columns reject '' (empty
+// string) and throw, so empty inputs must become null.
+const dec = (v) => {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isNaN(n) ? null : n;
+};
+
 const upsertShell = async (req, res) => {
   const { costingId } = req.params;
   const body = req.body;
@@ -111,23 +119,23 @@ const upsertShell = async (req, res) => {
 
   const shellData = {
     costingId,
-    shellOrder: body.shellOrder,
-    shellName: body.shellName,
-    application: body.application,
-    mill: body.mill,
-    fabricationDetail: body.fabricationDetail,
+    shellOrder: Number(body.shellOrder) || 1,
+    shellName: body.shellName || null,
+    application: body.application || null,
+    mill: body.mill || null,
+    fabricationDetail: body.fabricationDetail || null,
     fabricLibraryId: body.fabricLibraryId || null,
     isDirectPrice: body.isDirectPrice || false,
-    yarnCount: body.yarnCount,
-    yarnPricePerKg: body.yarnPricePerKg,
-    spandexPriceKg: body.spandexPriceKg,
-    spandexPct: body.spandexPct,
-    yarnDyeingCost: body.yarnDyeingCost,
-    knittingCost: body.knittingCost,
-    dyeingFinishing: body.dyeingFinishing,
-    aopFinishing: body.aopFinishing,
-    wastagePct: body.wastagePct,
-    directPricePerKg: body.directPricePerKg,
+    yarnCount: body.yarnCount || null,
+    yarnPricePerKg: dec(body.yarnPricePerKg),
+    spandexPriceKg: dec(body.spandexPriceKg),
+    spandexPct: dec(body.spandexPct),
+    yarnDyeingCost: dec(body.yarnDyeingCost),
+    knittingCost: dec(body.knittingCost),
+    dyeingFinishing: dec(body.dyeingFinishing),
+    aopFinishing: dec(body.aopFinishing),
+    wastagePct: dec(body.wastagePct),
+    directPricePerKg: dec(body.directPricePerKg),
     fabricPricePerKg,
     consumptionPerSize: body.consumptionPerSize || {},
     costPerSize,

@@ -45,7 +45,7 @@ export default function StyleNew() {
     if (sizes.length === 0) { toast.error('Select at least one size'); return; }
     setSaving(true);
     try {
-      const res = await api.post('/styles', { ...data, sizes });
+      const res = await api.post('/styles', { ...data, packOf: Number(data.packOf) || 1, sizes });
       toast.success('Style created!');
       navigate(`/styles/${res.data.data.id}`);
     } catch (err) {

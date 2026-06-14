@@ -59,10 +59,10 @@ const create = async (req, res) => {
       description,
       buyerId: buyerId || null,
       factoryId: factoryId || null,
-      department,
-      category,
-      season,
-      packOf: packOf || 1,
+      department: department || null,
+      category: category || null,
+      season: season || null,
+      packOf: Number(packOf) || 1, // form sends a string — Prisma Int needs a number
       sizes: sizes || [],
       createdBy: req.user.id,
     },
@@ -80,7 +80,17 @@ const update = async (req, res) => {
 
   const style = await prisma.style.update({
     where: { id: req.params.id },
-    data: { styleNo, description, buyerId, factoryId, department, category, season, packOf, sizes },
+    data: {
+      styleNo,
+      description,
+      buyerId: buyerId || null,
+      factoryId: factoryId || null,
+      department,
+      category,
+      season,
+      packOf: packOf != null ? Number(packOf) || 1 : undefined,
+      sizes,
+    },
     include: {
       buyer: { select: { id: true, name: true } },
       factory: { select: { id: true, name: true } },
