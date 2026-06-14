@@ -9,7 +9,12 @@ export default function FactoriesPage() {
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const load = () => api.get('/factories').then(({ data }) => setItems(data.data)).catch(() => {});
+  const load = async () => {
+    try {
+      const { data } = await api.get('/factories');
+      setItems(data.data);
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to load factories'); }
+  };
   useEffect(() => { load(); }, []);
 
   const save = async () => {

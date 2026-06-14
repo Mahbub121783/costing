@@ -9,22 +9,30 @@ const useAuthStore = create((set) => ({
 
   register: async (data) => {
     set({ loading: true, error: null });
-    const res = await api.post('/auth/register', data);
-    const { user, accessToken, refreshToken } = res.data;
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('user', JSON.stringify(user));
-    set({ user, isAuthenticated: true, loading: false });
+    try {
+      const res = await api.post('/auth/register', data);
+      const { user, accessToken, refreshToken } = res.data;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
+      set({ user, isAuthenticated: true });
+    } finally {
+      set({ loading: false });
+    }
   },
 
   login: async (data) => {
     set({ loading: true, error: null });
-    const res = await api.post('/auth/login', data);
-    const { user, accessToken, refreshToken } = res.data;
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('user', JSON.stringify(user));
-    set({ user, isAuthenticated: true, loading: false });
+    try {
+      const res = await api.post('/auth/login', data);
+      const { user, accessToken, refreshToken } = res.data;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
+      set({ user, isAuthenticated: true });
+    } finally {
+      set({ loading: false });
+    }
   },
 
   logout: async () => {

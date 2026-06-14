@@ -13,8 +13,12 @@ export default function TrimLibraryPage() {
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const load = () =>
-    api.get('/trim-library', { params: { search, category } }).then(({ data }) => setItems(data.data)).catch(() => {});
+  const load = async () => {
+    try {
+      const { data } = await api.get('/trim-library', { params: { search, category } });
+      setItems(data.data);
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to load trim library'); }
+  };
 
   useEffect(() => { load(); }, [search, category]);
 

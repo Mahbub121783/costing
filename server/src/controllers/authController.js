@@ -68,7 +68,13 @@ const refresh = async (req, res) => {
     throw new Error('Refresh token required');
   }
 
-  const decoded = verifyRefreshToken(refreshToken);
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(refreshToken);
+  } catch {
+    res.status(401);
+    throw new Error('Invalid or expired refresh token');
+  }
   const stored = await prisma.refreshToken.findUnique({ where: { token: refreshToken } });
 
   if (!stored || stored.userId !== decoded.id || stored.expiresAt < new Date()) {

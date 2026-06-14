@@ -19,8 +19,12 @@ export default function FabricLibraryPage() {
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const load = () =>
-    api.get('/fabric-library', { params: { search } }).then(({ data }) => setItems(data.data)).catch(() => {});
+  const load = async () => {
+    try {
+      const { data } = await api.get('/fabric-library', { params: { search } });
+      setItems(data.data);
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to load fabric library'); }
+  };
 
   useEffect(() => { load(); }, [search]);
 

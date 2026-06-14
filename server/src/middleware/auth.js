@@ -9,7 +9,13 @@ const protect = async (req, res, next) => {
   }
 
   const token = authHeader.split(' ')[1];
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    res.status(401);
+    throw new Error('Not authorized, token expired or invalid');
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: decoded.id },

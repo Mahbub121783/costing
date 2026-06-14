@@ -9,7 +9,12 @@ export default function BuyersPage() {
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const load = () => api.get('/buyers').then(({ data }) => setBuyers(data.data)).catch(() => {});
+  const load = async () => {
+    try {
+      const { data } = await api.get('/buyers');
+      setBuyers(data.data);
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to load buyers'); }
+  };
   useEffect(() => { load(); }, []);
 
   const save = async () => {
@@ -30,9 +35,11 @@ export default function BuyersPage() {
 
   const del = async (id) => {
     if (!confirm('Deactivate this buyer?')) return;
-    await api.delete(`/buyers/${id}`);
-    toast.success('Buyer removed');
-    load();
+    try {
+      await api.delete(`/buyers/${id}`);
+      toast.success('Buyer removed');
+      load();
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to remove buyer'); }
   };
 
   const startEdit = (b) => {
