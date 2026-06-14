@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { Plus, Trash2, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../../../lib/api';
 import { fmtUsd } from '../../../lib/utils';
@@ -148,8 +148,8 @@ export default function TrimsTab({ costing, sizes, onSaved, onLiveChange }) {
                 const isExpanded = expandedIdx === idx;
 
                 return (
-                  <>
-                    <tr key={idx} className={trim.isSizeSpecific ? 'bg-indigo-50/30' : ''}>
+                  <Fragment key={idx}>
+                    <tr className={trim.isSizeSpecific ? 'bg-indigo-50/30' : ''}>
                       <td>
                         <input
                           value={trim.itemName}
@@ -235,7 +235,7 @@ export default function TrimsTab({ costing, sizes, onSaved, onLiveChange }) {
 
                     {/* Expanded: per-size cost inputs */}
                     {trim.isSizeSpecific && isExpanded && (
-                      <tr key={`${idx}-sizes`} className="bg-indigo-50/50">
+                      <tr className="bg-indigo-50/50">
                         <td colSpan={3} className="py-2 px-3 text-xs text-indigo-600 font-semibold">
                           Cost / pc by size:
                         </td>
@@ -256,7 +256,7 @@ export default function TrimsTab({ costing, sizes, onSaved, onLiveChange }) {
                         <td colSpan={8 - 3 - sizes.length} />
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
 

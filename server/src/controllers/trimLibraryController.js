@@ -1,5 +1,20 @@
 const prisma = require('../utils/prisma');
 
+// Coerce '' / null / NaN to null — Prisma Decimal columns reject empty strings.
+const dec = (v) => {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isNaN(n) ? null : n;
+};
+
+const cleanTrim = (b) => ({
+  name: b.name,
+  category: b.category || null,
+  unit: b.unit || null,
+  unitPrice: dec(b.unitPrice),
+  supplier: b.supplier || null,
+});
+
 const getAll = async (req, res) => {
   const { search, category } = req.query;
   const items = await prisma.trimLibrary.findMany({
@@ -15,7 +30,7 @@ const getAll = async (req, res) => {
 
 const create = async (req, res) => {
   const item = await prisma.trimLibrary.create({
-    data: { ...req.body, createdBy: req.user.id },
+    data: { ...cleanTrim(req.body), createdBy: req.user.id },
   });
   res.status(201).json({ success: true, data: item });
 };
@@ -23,7 +38,7 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   const item = await prisma.trimLibrary.update({
     where: { id: req.params.id },
-    data: req.body,
+    data: cleanTrim(req.body),
   });
   res.json({ success: true, data: item });
 };
