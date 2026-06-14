@@ -82,8 +82,9 @@ const refresh = async (req, res) => {
     throw new Error('Invalid or expired refresh token');
   }
 
-  // Rotate refresh token
-  await prisma.refreshToken.delete({ where: { token: refreshToken } });
+  // Rotate refresh token (deleteMany is idempotent — never throws if the row
+  // was already removed by a concurrent refresh, unlike delete which throws P2025)
+  await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
   const newAccess = generateAccessToken(decoded.id);
   const newRefresh = generateRefreshToken(decoded.id);
 

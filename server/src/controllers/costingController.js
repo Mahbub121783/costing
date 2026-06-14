@@ -295,12 +295,31 @@ const saveTesting = async (req, res) => {
 };
 
 // ── Commercial ────────────────────────────────────────────────────────────────
+// Coerce a value to a number, treating '', null, undefined as a default.
+const num = (v, def = 0) => {
+  if (v === '' || v === null || v === undefined) return def;
+  const n = Number(v);
+  return Number.isNaN(n) ? def : n;
+};
+
 const saveCommercial = async (req, res) => {
   const { costingId } = req.params;
+  // Only pick valid schema fields — strip id/costingId/timestamps and coerce
+  // empty-string inputs to numbers so Prisma Decimal columns never receive ''.
+  const data = {
+    buyingHouseCommPct: num(req.body.buyingHouseCommPct),
+    factoryCommPct: num(req.body.factoryCommPct),
+    profitMarginPct: num(req.body.profitMarginPct),
+    otherCharges: Array.isArray(req.body.otherCharges)
+      ? req.body.otherCharges
+          .filter((o) => o && (o.label || o.pct))
+          .map((o) => ({ label: o.label || '', pct: num(o.pct) }))
+      : [],
+  };
   const commercial = await prisma.costingCommercial.upsert({
     where: { costingId },
-    create: { costingId, ...req.body },
-    update: req.body,
+    create: { costingId, ...data },
+    update: data,
   });
   res.json({ success: true, data: commercial });
 };

@@ -159,10 +159,13 @@ const calcShipment = (shipmentData, fobPerSize) => {
     importDutyPct = 0,
   } = shipmentData;
 
-  const totalQty = Object.values(orderQtyPerSize).reduce((a, b) => a + Number(b), 0);
-  const totalCartons = Math.ceil(totalQty / Number(pcsPerCarton));
-  const totalCbm = parseFloat((totalCartons * Number(cartonCbm)).toFixed(4));
-  const totalGw = parseFloat((totalCartons * Number(cartonGwKg)).toFixed(2));
+  const totalQty = Object.values(orderQtyPerSize).reduce((a, b) => a + Number(b || 0), 0);
+  const pcs = Number(pcsPerCarton);
+  // Guard against division by zero / empty carton size — avoids Infinity which
+  // Prisma cannot store in an Int column (would throw on save).
+  const totalCartons = pcs > 0 ? Math.ceil(totalQty / pcs) : 0;
+  const totalCbm = parseFloat((totalCartons * Number(cartonCbm || 0)).toFixed(4));
+  const totalGw = parseFloat((totalCartons * Number(cartonGwKg || 0)).toFixed(2));
 
   let totalFreight = 0;
   const rate = Number(freightRateUsd);
