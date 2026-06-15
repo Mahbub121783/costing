@@ -298,6 +298,12 @@ CREATE TABLE IF NOT EXISTS "costing_audit_log" (
 CREATE INDEX IF NOT EXISTS "costing_audit_log_costing_id_idx" ON "costing_audit_log" ("costing_id");
 CREATE INDEX IF NOT EXISTS "costing_audit_log_changed_at_idx"  ON "costing_audit_log" ("changed_at");
 
+-- ── SCHEMA MIGRATIONS (idempotent column additions) ─────────────────────────
+
+DO $$ BEGIN ALTER TABLE "users" ADD COLUMN "company" VARCHAR(200); EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "users" ADD COLUMN "phone" VARCHAR(50); EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "users" ADD COLUMN "designation" VARCHAR(100); EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+
 -- ── FOREIGN KEYS (skipped if already exist) ───────────────────────────────────
 
 DO $$ BEGIN

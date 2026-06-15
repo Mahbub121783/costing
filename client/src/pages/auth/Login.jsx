@@ -11,6 +11,7 @@ const schema = z.object({
   password: z.string().min(1, 'Password required'),
 });
 
+
 export default function Login() {
   const { login, loading } = useAuthStore();
   const navigate = useNavigate();

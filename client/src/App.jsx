@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import ProtectedRoute from './components/ui/ProtectedRoute';
+import AdminRoute from './components/ui/AdminRoute';
 import AppLayout from './components/layout/AppLayout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -14,6 +15,8 @@ import FabricLibraryPage from './pages/library/FabricLibraryPage';
 import TrimLibraryPage from './pages/library/TrimLibraryPage';
 import BuyersPage from './pages/masters/BuyersPage';
 import FactoriesPage from './pages/masters/FactoriesPage';
+import UsersPage from './pages/admin/UsersPage';
+import ProfilePage from './pages/profile/ProfilePage';
 
 export default function App() {
   return (
@@ -38,6 +41,12 @@ export default function App() {
             <Route path="/library/trim" element={<TrimLibraryPage />} />
             <Route path="/masters/buyers" element={<BuyersPage />} />
             <Route path="/masters/factories" element={<FactoriesPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+
+            {/* Admin-only routes */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin/users" element={<UsersPage />} />
+            </Route>
           </Route>
         </Route>
 

@@ -14,6 +14,7 @@ const trimLibraryRoutes = require('./routes/trimLibrary');
 const styleRoutes = require('./routes/styles');
 const costingRoutes = require('./routes/costings');
 const dashboardRoutes = require('./routes/dashboard');
+const userRoutes = require('./routes/users');
 const upload = require('./middleware/upload');
 const { protect } = require('./middleware/auth');
 const { uploadStyleImage } = require('./controllers/uploadController');
@@ -37,6 +38,7 @@ app.use('/api/trim-library', trimLibraryRoutes);
 app.use('/api/styles', styleRoutes);
 app.use('/api/costings', costingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/users', userRoutes);
 
 // Style image upload (multer)
 app.post('/api/styles/:id/image', protect, upload.single('image'), uploadStyleImage);

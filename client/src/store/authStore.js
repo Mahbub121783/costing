@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import api from '../lib/api';
 
-const useAuthStore = create((set) => ({
+const useAuthStore = create((set, get) => ({
   user: JSON.parse(localStorage.getItem('user') || 'null'),
   isAuthenticated: !!localStorage.getItem('accessToken'),
   loading: false,
@@ -40,6 +40,38 @@ const useAuthStore = create((set) => ({
     try { await api.post('/auth/logout', { refreshToken }); } catch {}
     localStorage.clear();
     set({ user: null, isAuthenticated: false });
+  },
+
+  updateProfile: async (data) => {
+    set({ loading: true });
+    try {
+      const res = await api.put('/auth/profile', data);
+      const { user } = res.data;
+      localStorage.setItem('user', JSON.stringify(user));
+      set({ user });
+      return user;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  changePassword: async (data) => {
+    set({ loading: true });
+    try {
+      await api.put('/auth/change-password', data);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // Update user in store after admin changes (e.g. role changed for current user)
+  refreshMe: async () => {
+    try {
+      const res = await api.get('/auth/me');
+      const { user } = res.data;
+      localStorage.setItem('user', JSON.stringify(user));
+      set({ user });
+    } catch {}
   },
 }));
 
