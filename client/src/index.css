@@ -154,6 +154,27 @@
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold
       bg-red-100 text-red-700;
   }
+  /* Finance & HR badges */
+  .badge-pending {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold
+      bg-slate-100 text-slate-600;
+  }
+  .badge-partial {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold
+      bg-amber-100 text-amber-700;
+  }
+  .badge-paid {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold
+      bg-emerald-100 text-emerald-700;
+  }
+  .badge-active {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold
+      bg-indigo-100 text-indigo-700;
+  }
+  .badge-terminated {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold
+      bg-red-100 text-red-600;
+  }
   .status-dot {
     @apply w-1.5 h-1.5 rounded-full flex-shrink-0;
   }

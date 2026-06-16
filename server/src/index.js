@@ -15,6 +15,12 @@ const styleRoutes = require('./routes/styles');
 const costingRoutes = require('./routes/costings');
 const dashboardRoutes = require('./routes/dashboard');
 const userRoutes = require('./routes/users');
+const employeeRoutes = require('./routes/employees');
+const payrollRoutes = require('./routes/payroll');
+const orderFinanceRoutes = require('./routes/orderFinance');
+const expenseRoutes = require('./routes/expenses');
+const invoiceRoutes = require('./routes/invoices');
+const financeRoutes = require('./routes/finance');
 const upload = require('./middleware/upload');
 const { protect } = require('./middleware/auth');
 const { uploadStyleImage } = require('./controllers/uploadController');
@@ -39,6 +45,12 @@ app.use('/api/styles', styleRoutes);
 app.use('/api/costings', costingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/payroll', payrollRoutes);
+app.use('/api/order-finance', orderFinanceRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/finance', financeRoutes);
 
 // Style image upload (multer)
 app.post('/api/styles/:id/image', protect, upload.single('image'), uploadStyleImage);

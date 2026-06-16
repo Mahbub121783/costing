@@ -1,7 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Shirt, BookOpen, Users, Factory,
-  LogOut, Layers, Scissors, ShieldCheck, UserCircle
+  LayoutDashboard, Shirt, Users, Factory,
+  LogOut, Layers, Scissors, ShieldCheck, UserCircle,
+  TrendingUp, ShoppingBag, FileText, Receipt, UserSquare, Wallet,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 
@@ -14,6 +15,14 @@ const NAV = [
   { divider: 'Masters' },
   { to: '/masters/buyers', icon: Users, label: 'Buyers / Brands' },
   { to: '/masters/factories', icon: Factory, label: 'Factories' },
+  { divider: 'Finance' },
+  { to: '/finance/dashboard', icon: TrendingUp, label: 'Finance Overview' },
+  { to: '/finance/orders', icon: ShoppingBag, label: 'Orders & Payments' },
+  { to: '/finance/invoices', icon: FileText, label: 'Invoices' },
+  { to: '/finance/expenses', icon: Receipt, label: 'Expenses' },
+  { divider: 'HR & Payroll' },
+  { to: '/employees', icon: UserSquare, label: 'Employees' },
+  { to: '/payroll', icon: Wallet, label: 'Payroll' },
 ];
 
 const ADMIN_NAV = [

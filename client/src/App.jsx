@@ -17,6 +17,18 @@ import BuyersPage from './pages/masters/BuyersPage';
 import FactoriesPage from './pages/masters/FactoriesPage';
 import UsersPage from './pages/admin/UsersPage';
 import ProfilePage from './pages/profile/ProfilePage';
+import FinanceDashboard from './pages/finance/FinanceDashboard';
+import OrderFinanceList from './pages/finance/OrderFinanceList';
+import OrderFinanceDetail from './pages/finance/OrderFinanceDetail';
+import InvoiceList from './pages/finance/InvoiceList';
+import InvoiceDetail from './pages/finance/InvoiceDetail';
+import InvoicePrint from './pages/finance/InvoicePrint';
+import ExpenseList from './pages/finance/ExpenseList';
+import EmployeeList from './pages/employees/EmployeeList';
+import EmployeeNew from './pages/employees/EmployeeNew';
+import EmployeeDetail from './pages/employees/EmployeeDetail';
+import PayrollList from './pages/payroll/PayrollList';
+import PayrollRun from './pages/payroll/PayrollRun';
 
 export default function App() {
   return (
@@ -27,8 +39,9 @@ export default function App() {
         <Route path="/register" element={<Register />} />
 
         <Route element={<ProtectedRoute />}>
-          {/* Print view — full screen, no sidebar */}
+          {/* Full-screen print views — no sidebar */}
           <Route path="/costing/:id/print" element={<CostingPrint />} />
+          <Route path="/finance/invoices/:id/print" element={<InvoicePrint />} />
 
           <Route element={<AppLayout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
@@ -42,6 +55,21 @@ export default function App() {
             <Route path="/masters/buyers" element={<BuyersPage />} />
             <Route path="/masters/factories" element={<FactoriesPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+
+            {/* Finance */}
+            <Route path="/finance/dashboard" element={<FinanceDashboard />} />
+            <Route path="/finance/orders" element={<OrderFinanceList />} />
+            <Route path="/finance/orders/:id" element={<OrderFinanceDetail />} />
+            <Route path="/finance/invoices" element={<InvoiceList />} />
+            <Route path="/finance/invoices/:id" element={<InvoiceDetail />} />
+            <Route path="/finance/expenses" element={<ExpenseList />} />
+
+            {/* HR & Payroll */}
+            <Route path="/employees" element={<EmployeeList />} />
+            <Route path="/employees/new" element={<EmployeeNew />} />
+            <Route path="/employees/:id" element={<EmployeeDetail />} />
+            <Route path="/payroll" element={<PayrollList />} />
+            <Route path="/payroll/:id" element={<PayrollRun />} />
 
             {/* Admin-only routes */}
             <Route element={<AdminRoute />}>

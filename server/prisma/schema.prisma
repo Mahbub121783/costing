@@ -43,6 +43,69 @@ enum FreightUnit {
   LUMP_SUM
 }
 
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  TERMINATED
+}
+
+enum PaymentTerms {
+  LC
+  TT
+  DP
+  DA
+}
+
+enum OrderPaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+}
+
+enum ExpenseCategory {
+  TRANSPORT
+  UTILITY
+  OFFICE_RENT
+  SALARIES
+  MOBILE
+  FOOD_ENTERTAINMENT
+  MARKETING
+  MISCELLANEOUS
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  PAID
+}
+
+enum InvoiceType {
+  COMMERCIAL
+  PROFORMA
+  INTERNAL
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PARTIAL
+  PAID
+  CANCELLED
+}
+
+enum PayrollStatus {
+  DRAFT
+  FINALIZED
+  PAID
+}
+
+enum BonusType {
+  EID
+  PERFORMANCE
+  INCENTIVE
+  OTHER
+}
+
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
 model User {
@@ -58,7 +121,7 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  // Relations
+  // Existing relations
   buyers        Buyer[]
   factories     Factory[]
   fabricLibrary FabricLibrary[]
@@ -66,6 +129,19 @@ model User {
   styles        Style[]
   costings      Costing[]
   auditLogs     CostingAuditLog[]
+
+  // Finance & HR relations
+  employees            Employee[]
+  employeeHistories    EmployeeHistory[]
+  salaryStructures     EmployeeSalaryStructure[]
+  employeeExpenses     EmployeeExpense[]
+  payrollsCreated      MonthlyPayroll[]   @relation("PayrollCreator")
+  payrollsProcessed    MonthlyPayroll[]   @relation("PayrollProcessor")
+  orderFinances        OrderFinance[]
+  orderPayments        OrderPayment[]
+  expensesCreated      BusinessExpense[]  @relation("ExpenseCreator")
+  expensesApproved     BusinessExpense[]  @relation("ExpenseApprover")
+  invoices             Invoice[]
 
   @@map("users")
 }
@@ -94,8 +170,10 @@ model Buyer {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  creator User    @relation(fields: [createdBy], references: [id])
-  styles  Style[]
+  creator      User           @relation(fields: [createdBy], references: [id])
+  styles       Style[]
+  orderFinances OrderFinance[]
+  invoices     Invoice[]
 
   @@index([name])
   @@map("buyers")
@@ -127,7 +205,6 @@ model FabricLibrary {
   composition        String?  @db.VarChar(200)
   gsm                Decimal? @db.Decimal(8, 2)
   supplier           String?  @db.VarChar(200)
-  // Yarn-based fields
   yarnCount          String?  @map("yarn_count") @db.VarChar(100)
   yarnPricePerKg     Decimal? @map("yarn_price_per_kg") @db.Decimal(10, 4)
   spandexPriceKg     Decimal? @map("spandex_price_kg") @db.Decimal(10, 4)
@@ -137,7 +214,6 @@ model FabricLibrary {
   dyeingFinishing    Decimal? @map("dyeing_finishing") @db.Decimal(10, 4)
   aopFinishing       Decimal? @map("aop_finishing") @db.Decimal(10, 4)
   wastagePct         Decimal? @map("wastage_pct") @db.Decimal(5, 4)
-  // Direct price option
   isDirectPrice      Boolean  @default(false) @map("is_direct_price")
   directPricePerKg   Decimal? @map("direct_price_per_kg") @db.Decimal(10, 4)
   isActive           Boolean  @default(true) @map("is_active")
@@ -184,7 +260,6 @@ model Style {
   season      String?  @db.VarChar(50)
   imageUrl    String?  @map("image_url") @db.VarChar(500)
   packOf      Int      @default(1) @map("pack_of")
-  // Declared sizes as ordered array, e.g. ["3Y-6Y","7Y-10Y","11Y-14Y","15Y-16Y"]
   sizes       String[] @default([])
   isActive    Boolean  @default(true) @map("is_active")
   createdBy   String   @map("created_by") @db.Uuid
@@ -231,6 +306,7 @@ model Costing {
   commercial     CostingCommercial?
   shipment       CostingShipment?
   auditLogs      CostingAuditLog[]
+  orderFinances  OrderFinance[]
 
   @@unique([styleId, version])
   @@index([styleId])
@@ -249,11 +325,7 @@ model CostingFabricShell {
   mill               String?  @db.VarChar(200)
   fabricationDetail  String?  @map("fabrication_detail") @db.VarChar(300)
   fabricLibraryId    String?  @map("fabric_library_id") @db.Uuid
-
-  // Fabric price mode
   isDirectPrice      Boolean  @default(false) @map("is_direct_price")
-
-  // Mode A: Yarn-based inputs
   yarnCount          String?  @map("yarn_count") @db.VarChar(100)
   yarnPricePerKg     Decimal? @map("yarn_price_per_kg") @db.Decimal(10, 4)
   spandexPriceKg     Decimal? @map("spandex_price_kg") @db.Decimal(10, 4)
@@ -263,19 +335,10 @@ model CostingFabricShell {
   dyeingFinishing    Decimal? @map("dyeing_finishing") @db.Decimal(10, 4)
   aopFinishing       Decimal? @map("aop_finishing") @db.Decimal(10, 4)
   wastagePct         Decimal? @map("wastage_pct") @db.Decimal(5, 4)
-
-  // Mode B: Direct price
   directPricePerKg   Decimal? @map("direct_price_per_kg") @db.Decimal(10, 4)
-
-  // Final resolved fabric price/kg (set by app logic)
   fabricPricePerKg   Decimal? @map("fabric_price_per_kg") @db.Decimal(10, 4)
-
-  // CAD consumption per size — {"3Y-6Y": 0.323, "7Y-10Y": 0.408, ...}
   consumptionPerSize Json     @default("{}") @map("consumption_per_size")
-
-  // Calculated cost per size — {"3Y-6Y": 2.174, ...}
   costPerSize        Json     @default("{}") @map("cost_per_size")
-
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -298,7 +361,6 @@ model CostingTrim {
   ratePerUnit    Decimal? @map("rate_per_unit") @db.Decimal(10, 4)
   qtyPerGarment  Decimal? @map("qty_per_garment") @db.Decimal(10, 4)
   isSizeSpecific Boolean  @default(false) @map("is_size_specific")
-  // Cost per size — {"XS": 0.175, "S": 0.175, ...} (auto-filled from qty×rate or manually per-size)
   costPerSize    Json     @default("{}") @map("cost_per_size")
   sortOrder      Int      @default(0) @map("sort_order")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -317,17 +379,13 @@ model CostingCm {
   id               String  @id @default(uuid()) @db.Uuid
   costingId        String  @unique @map("costing_id") @db.Uuid
   cmMode           CmMode  @default(DIRECT_RATE) @map("cm_mode")
-  // SMV-based
   smv              Decimal? @db.Decimal(8, 2)
   lineEfficiency   Decimal? @map("line_efficiency") @db.Decimal(5, 4)
   workerWageDay    Decimal? @map("worker_wage_day") @db.Decimal(10, 4)
   workingMinsDay   Int?     @default(480) @map("working_mins_day")
-  // Direct rate
   directCmRate     Decimal? @map("direct_cm_rate") @db.Decimal(10, 4)
-  // Overhead and compliance on top of base CM
   overheadPct      Decimal? @default(0) @map("overhead_pct") @db.Decimal(5, 4)
   compliancePct    Decimal? @default(0) @map("compliance_pct") @db.Decimal(5, 4)
-  // CM per size — can override global rate for specific sizes
   cmTopPerSize     Json     @default("{}") @map("cm_top_per_size")
   cmBottomPerSize  Json     @default("{}") @map("cm_bottom_per_size")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -412,7 +470,6 @@ model CostingCommercial {
   buyingHouseCommPct  Decimal  @default(0) @map("buying_house_comm_pct") @db.Decimal(5, 4)
   factoryCommPct      Decimal  @default(0) @map("factory_comm_pct") @db.Decimal(5, 4)
   profitMarginPct     Decimal  @default(0) @map("profit_margin_pct") @db.Decimal(5, 4)
-  // Extra flexible charges [{label: "Bank Charge", pct: 0.005}]
   otherCharges        Json     @default("[]") @map("other_charges")
   createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -427,7 +484,6 @@ model CostingCommercial {
 model CostingShipment {
   id                String      @id @default(uuid()) @db.Uuid
   costingId         String      @unique @map("costing_id") @db.Uuid
-  // Order quantity per size — {"3Y-6Y": 500, "7Y-10Y": 1000, ...}
   orderQtyPerSize   Json        @default("{}") @map("order_qty_per_size")
   totalQty          Int?        @map("total_qty")
   pcsPerCarton      Int?        @map("pcs_per_carton")
@@ -438,11 +494,9 @@ model CostingShipment {
   freightUnit       FreightUnit @default(PER_CBM) @map("freight_unit")
   insurancePct      Decimal     @default(0) @map("insurance_pct") @db.Decimal(5, 4)
   importDutyPct     Decimal     @default(0) @map("import_duty_pct") @db.Decimal(5, 4)
-  // Calculated results
   totalCartons      Int?        @map("total_cartons")
   totalCbm          Decimal?    @map("total_cbm") @db.Decimal(10, 4)
   freightPerPiece   Decimal?    @map("freight_per_piece") @db.Decimal(10, 4)
-  // Landed cost per size — {"3Y-6Y": 6.08, ...}
   landedCostPerSize Json        @default("{}") @map("landed_cost_per_size")
   createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime    @updatedAt @map("updated_at") @db.Timestamptz
@@ -464,10 +518,309 @@ model CostingAuditLog {
   oldValue   String?  @map("old_value") @db.Text
   newValue   String?  @map("new_value") @db.Text
 
-  costing   Costing @relation(fields: [costingId], references: [id], onDelete: Cascade)
-  changedByUser User @relation(fields: [changedBy], references: [id])
+  costing       Costing @relation(fields: [costingId], references: [id], onDelete: Cascade)
+  changedByUser User    @relation(fields: [changedBy], references: [id])
 
   @@index([costingId])
   @@index([changedAt])
   @@map("costing_audit_log")
+}
+
+// ─── EMPLOYEE ─────────────────────────────────────────────────────────────────
+
+model Employee {
+  id               String         @id @default(uuid()) @db.Uuid
+  employeeCode     String         @unique @map("employee_code") @db.VarChar(20)
+  name             String         @db.VarChar(200)
+  photoUrl         String?        @map("photo_url") @db.VarChar(500)
+  nid              String?        @db.VarChar(50)
+  phone            String?        @db.VarChar(50)
+  email            String?        @db.VarChar(255)
+  joiningDate      DateTime       @map("joining_date") @db.Date
+  designation      String?        @db.VarChar(100)
+  department       String?        @db.VarChar(100)
+  address          String?        @db.Text
+  emergencyContact Json           @default("{}") @map("emergency_contact")
+  bankDetails      Json           @default("{}") @map("bank_details")
+  status           EmployeeStatus @default(ACTIVE)
+  createdBy        String         @map("created_by") @db.Uuid
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  creator         User                      @relation(fields: [createdBy], references: [id])
+  salaryStructure EmployeeSalaryStructure[]
+  payrollItems    PayrollItem[]
+  expenses        EmployeeExpense[]
+  historyLogs     EmployeeHistory[]
+
+  @@index([employeeCode])
+  @@index([department])
+  @@index([status])
+  @@map("employees")
+}
+
+model EmployeeHistory {
+  id         String   @id @default(uuid()) @db.Uuid
+  employeeId String   @map("employee_id") @db.Uuid
+  changedBy  String   @map("changed_by") @db.Uuid
+  changedAt  DateTime @default(now()) @map("changed_at") @db.Timestamptz
+  changeType String   @map("change_type") @db.VarChar(50)
+  oldValue   String?  @map("old_value") @db.Text
+  newValue   String?  @map("new_value") @db.Text
+  notes      String?  @db.Text
+
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  changedByUser User     @relation(fields: [changedBy], references: [id])
+
+  @@index([employeeId])
+  @@index([changedAt])
+  @@map("employee_history")
+}
+
+model EmployeeSalaryStructure {
+  id                 String   @id @default(uuid()) @db.Uuid
+  employeeId         String   @map("employee_id") @db.Uuid
+  effectiveFrom      DateTime @map("effective_from") @db.Date
+  basicSalary        Decimal  @map("basic_salary") @db.Decimal(12, 2)
+  houseRent          Decimal  @default(0) @map("house_rent") @db.Decimal(12, 2)
+  medicalAllowance   Decimal  @default(0) @map("medical_allowance") @db.Decimal(12, 2)
+  transportAllowance Decimal  @default(0) @map("transport_allowance") @db.Decimal(12, 2)
+  mobileBill         Decimal  @default(0) @map("mobile_bill") @db.Decimal(12, 2)
+  grossSalary        Decimal  @map("gross_salary") @db.Decimal(12, 2)
+  taxDeduction       Decimal  @default(0) @map("tax_deduction") @db.Decimal(12, 2)
+  otherDeductions    Decimal  @default(0) @map("other_deductions") @db.Decimal(12, 2)
+  isActive           Boolean  @default(true) @map("is_active")
+  createdBy          String   @map("created_by") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  creator  User     @relation(fields: [createdBy], references: [id])
+
+  @@index([employeeId])
+  @@index([effectiveFrom])
+  @@map("employee_salary_structures")
+}
+
+model EmployeeExpense {
+  id            String     @id @default(uuid()) @db.Uuid
+  employeeId    String     @map("employee_id") @db.Uuid
+  expenseDate   DateTime   @map("expense_date") @db.Date
+  expenseType   String     @map("expense_type") @db.VarChar(50)
+  bonusType     BonusType? @map("bonus_type")
+  amount        Decimal    @db.Decimal(12, 2)
+  description   String?    @db.Text
+  month         Int?
+  year          Int?
+  payrollItemId String?    @map("payroll_item_id") @db.Uuid
+  createdBy     String     @map("created_by") @db.Uuid
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz
+
+  employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  creator     User         @relation(fields: [createdBy], references: [id])
+  payrollItem PayrollItem? @relation(fields: [payrollItemId], references: [id])
+
+  @@index([employeeId])
+  @@index([expenseType])
+  @@index([month, year])
+  @@map("employee_expenses")
+}
+
+// ─── PAYROLL ──────────────────────────────────────────────────────────────────
+
+model MonthlyPayroll {
+  id           String        @id @default(uuid()) @db.Uuid
+  month        Int
+  year         Int
+  status       PayrollStatus @default(DRAFT)
+  totalGross   Decimal       @default(0) @map("total_gross") @db.Decimal(14, 2)
+  totalNet     Decimal       @default(0) @map("total_net") @db.Decimal(14, 2)
+  totalAdvance Decimal       @default(0) @map("total_advance") @db.Decimal(14, 2)
+  notes        String?       @db.Text
+  processedBy  String?       @map("processed_by") @db.Uuid
+  processedAt  DateTime?     @map("processed_at") @db.Timestamptz
+  paidAt       DateTime?     @map("paid_at") @db.Timestamptz
+  createdBy    String        @map("created_by") @db.Uuid
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  creator   User          @relation("PayrollCreator", fields: [createdBy], references: [id])
+  processor User?         @relation("PayrollProcessor", fields: [processedBy], references: [id])
+  items     PayrollItem[]
+
+  @@unique([month, year])
+  @@index([year, month])
+  @@map("monthly_payrolls")
+}
+
+model PayrollItem {
+  id                 String     @id @default(uuid()) @db.Uuid
+  payrollId          String     @map("payroll_id") @db.Uuid
+  employeeId         String     @map("employee_id") @db.Uuid
+  basicSalary        Decimal    @map("basic_salary") @db.Decimal(12, 2)
+  houseRent          Decimal    @default(0) @map("house_rent") @db.Decimal(12, 2)
+  medicalAllowance   Decimal    @default(0) @map("medical_allowance") @db.Decimal(12, 2)
+  transportAllowance Decimal    @default(0) @map("transport_allowance") @db.Decimal(12, 2)
+  mobileBill         Decimal    @default(0) @map("mobile_bill") @db.Decimal(12, 2)
+  grossSalary        Decimal    @map("gross_salary") @db.Decimal(12, 2)
+  bonusAmount        Decimal    @default(0) @map("bonus_amount") @db.Decimal(12, 2)
+  bonusType          BonusType? @map("bonus_type")
+  overtimeAmount     Decimal    @default(0) @map("overtime_amount") @db.Decimal(12, 2)
+  advanceDeduction   Decimal    @default(0) @map("advance_deduction") @db.Decimal(12, 2)
+  taxDeduction       Decimal    @default(0) @map("tax_deduction") @db.Decimal(12, 2)
+  otherDeductions    Decimal    @default(0) @map("other_deductions") @db.Decimal(12, 2)
+  totalDeductions    Decimal    @default(0) @map("total_deductions") @db.Decimal(12, 2)
+  netPay             Decimal    @map("net_pay") @db.Decimal(12, 2)
+  isPaid             Boolean    @default(false) @map("is_paid")
+  paidAt             DateTime?  @map("paid_at") @db.Timestamptz
+  notes              String?    @db.Text
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  payroll  MonthlyPayroll    @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  employee Employee          @relation(fields: [employeeId], references: [id])
+  expenses EmployeeExpense[]
+
+  @@unique([payrollId, employeeId])
+  @@index([payrollId])
+  @@index([employeeId])
+  @@map("payroll_items")
+}
+
+// ─── ORDER FINANCE ────────────────────────────────────────────────────────────
+
+model OrderFinance {
+  id              String             @id @default(uuid()) @db.Uuid
+  orderNo         String             @unique @map("order_no") @db.VarChar(50)
+  costingId       String             @map("costing_id") @db.Uuid
+  buyerId         String             @map("buyer_id") @db.Uuid
+  agreedFobPerPc  Decimal            @map("agreed_fob_per_pc") @db.Decimal(10, 4)
+  totalQty        Int                @map("total_qty")
+  totalGoodsValue Decimal            @map("total_goods_value") @db.Decimal(14, 2)
+  currency        String             @default("USD") @db.VarChar(10)
+  paymentTerms    PaymentTerms       @map("payment_terms")
+  advancePct      Decimal            @default(0) @map("advance_pct") @db.Decimal(5, 4)
+  advanceAmount   Decimal            @default(0) @map("advance_amount") @db.Decimal(14, 2)
+  balanceAmount   Decimal            @default(0) @map("balance_amount") @db.Decimal(14, 2)
+  paymentStatus   OrderPaymentStatus @default(PENDING) @map("payment_status")
+  totalPaid       Decimal            @default(0) @map("total_paid") @db.Decimal(14, 2)
+  shipmentDate    DateTime?          @map("shipment_date") @db.Date
+  deliveryDate    DateTime?          @map("delivery_date") @db.Date
+  notes           String?            @db.Text
+  createdBy       String             @map("created_by") @db.Uuid
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  costing  Costing        @relation(fields: [costingId], references: [id])
+  buyer    Buyer          @relation(fields: [buyerId], references: [id])
+  creator  User           @relation(fields: [createdBy], references: [id])
+  payments OrderPayment[]
+  invoices Invoice[]
+
+  @@index([costingId])
+  @@index([buyerId])
+  @@index([paymentStatus])
+  @@map("order_finances")
+}
+
+model OrderPayment {
+  id             String   @id @default(uuid()) @db.Uuid
+  orderFinanceId String   @map("order_finance_id") @db.Uuid
+  paymentDate    DateTime @map("payment_date") @db.Date
+  amount         Decimal  @db.Decimal(14, 2)
+  paymentMethod  String   @map("payment_method") @db.VarChar(50)
+  bankReference  String?  @map("bank_reference") @db.VarChar(200)
+  notes          String?  @db.Text
+  createdBy      String   @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  orderFinance OrderFinance @relation(fields: [orderFinanceId], references: [id], onDelete: Cascade)
+  creator      User         @relation(fields: [createdBy], references: [id])
+
+  @@index([orderFinanceId])
+  @@index([paymentDate])
+  @@map("order_payments")
+}
+
+// ─── BUSINESS EXPENSES ────────────────────────────────────────────────────────
+
+model BusinessExpense {
+  id            String          @id @default(uuid()) @db.Uuid
+  expenseDate   DateTime        @map("expense_date") @db.Date
+  category      ExpenseCategory
+  description   String          @db.Text
+  amount        Decimal         @db.Decimal(12, 2)
+  paymentMethod String?         @map("payment_method") @db.VarChar(50)
+  receiptUrl    String?         @map("receipt_url") @db.VarChar(500)
+  isRecurring   Boolean         @default(false) @map("is_recurring")
+  recurringDay  Int?            @map("recurring_day")
+  status        ExpenseStatus   @default(PENDING)
+  paidAt        DateTime?       @map("paid_at") @db.Timestamptz
+  approvedBy    String?         @map("approved_by") @db.Uuid
+  approvedAt    DateTime?       @map("approved_at") @db.Timestamptz
+  month         Int?
+  year          Int?
+  createdBy     String          @map("created_by") @db.Uuid
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  creator  User  @relation("ExpenseCreator", fields: [createdBy], references: [id])
+  approver User? @relation("ExpenseApprover", fields: [approvedBy], references: [id])
+
+  @@index([category])
+  @@index([status])
+  @@index([expenseDate])
+  @@index([month, year])
+  @@map("business_expenses")
+}
+
+// ─── INVOICES ─────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id                    String        @id @default(uuid()) @db.Uuid
+  invoiceNo             String        @unique @map("invoice_no") @db.VarChar(20)
+  invoiceType           InvoiceType   @map("invoice_type")
+  invoiceDate           DateTime      @map("invoice_date") @db.Date
+  orderFinanceId        String?       @map("order_finance_id") @db.Uuid
+  buyerId               String?       @map("buyer_id") @db.Uuid
+  buyerName             String?       @map("buyer_name") @db.VarChar(200)
+  buyerAddress          String?       @map("buyer_address") @db.Text
+  subtotal              Decimal       @default(0) @db.Decimal(14, 2)
+  additionalCharges     Decimal       @default(0) @map("additional_charges") @db.Decimal(14, 2)
+  additionalChargesNote String?       @map("additional_charges_note") @db.VarChar(200)
+  grandTotal            Decimal       @default(0) @map("grand_total") @db.Decimal(14, 2)
+  currency              String        @default("USD") @db.VarChar(10)
+  status                InvoiceStatus @default(DRAFT)
+  dueDate               DateTime?     @map("due_date") @db.Date
+  paidAt                DateTime?     @map("paid_at") @db.Timestamptz
+  notes                 String?       @db.Text
+  createdBy             String        @map("created_by") @db.Uuid
+  createdAt             DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  orderFinance OrderFinance? @relation(fields: [orderFinanceId], references: [id])
+  buyer        Buyer?        @relation(fields: [buyerId], references: [id])
+  creator      User          @relation(fields: [createdBy], references: [id])
+  items        InvoiceItem[]
+
+  @@index([invoiceType])
+  @@index([status])
+  @@index([buyerId])
+  @@index([orderFinanceId])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  invoiceId   String   @map("invoice_id") @db.Uuid
+  description String   @db.VarChar(500)
+  quantity    Decimal  @db.Decimal(12, 3)
+  unitPrice   Decimal  @map("unit_price") @db.Decimal(10, 4)
+  totalPrice  Decimal  @map("total_price") @db.Decimal(14, 2)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
 }
