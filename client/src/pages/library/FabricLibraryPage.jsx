@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Pencil, Trash2, Calculator } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 import { calcFabricPrice, fmtUsd } from '../../lib/utils';
 
 const empty = () => ({
@@ -22,7 +22,7 @@ export default function FabricLibraryPage() {
   const load = async () => {
     try {
       const { data } = await api.get('/fabric-library', { params: { search } });
-      setItems(data.data);
+      setItems(asArray(data));
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to load fabric library'); }
   };
 

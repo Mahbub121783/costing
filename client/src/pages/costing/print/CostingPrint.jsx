@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Printer, ArrowLeft } from 'lucide-react';
-import api from '../../../lib/api';
+import api, { asData } from '../../../lib/api';
 import './print.css';
 
 const fmt4 = (v) => (v !== undefined && v !== null ? Number(v).toFixed(4) : '—');
@@ -34,9 +34,9 @@ export default function CostingPrint() {
 
   useEffect(() => {
     api.get(`/costings/${id}`).then(({ data }) => {
-      setCosting(data.data);
+      setCosting(asData(data));
       setFobSummary(data.fobSummary);
-    });
+    }).catch(() => {});
   }, [id]);
 
   if (!costing) return <div className="p-10 text-center text-gray-400">Loading...</div>;

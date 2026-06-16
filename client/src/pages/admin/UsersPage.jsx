@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, Shield, Eye, Edit3, KeyRound, ToggleLeft, ToggleRight, X, Check, Building2, Phone, Briefcase } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 import useAuthStore from '../../store/authStore';
 
 const ROLES = ['ADMIN', 'MERCHANDISER', 'VIEWER'];
@@ -45,7 +45,7 @@ export default function UsersPage() {
   const load = async () => {
     try {
       const res = await api.get('/users');
-      setUsers(res.data.data);
+      setUsers(asArray(res.data));
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to load users');
     } finally {

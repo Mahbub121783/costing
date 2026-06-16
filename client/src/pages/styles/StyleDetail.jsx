@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Plus, FileText, ChevronRight, Copy, Printer, Upload, Image, X, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '../../lib/api';
+import api, { asData } from '../../lib/api';
 
 const STATUS_CONFIG = {
   DRAFT:     { badge: 'badge-draft',     label: 'Draft' },
@@ -20,7 +20,7 @@ export default function StyleDetail() {
   const fileRef = useRef(null);
 
   const load = () =>
-    api.get(`/styles/${id}`).then(({ data }) => setStyle(data.data)).catch(() => toast.error('Style not found'));
+    api.get(`/styles/${id}`).then(({ data }) => setStyle(asData(data))).catch(() => toast.error('Style not found'));
 
   useEffect(() => { load(); }, [id]);
 

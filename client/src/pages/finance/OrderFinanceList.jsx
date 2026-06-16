@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 import toast from 'react-hot-toast';
 import OrderFinanceModal from './OrderFinanceModal';
 
@@ -19,7 +19,7 @@ export default function OrderFinanceList() {
   const load = () => {
     const params = {};
     if (statusFilter) params.status = statusFilter;
-    api.get('/order-finance', { params }).then((r) => setOrders(r.data)).catch(() => toast.error('Failed to load orders')).finally(() => setLoading(false));
+    api.get('/order-finance', { params }).then((r) => setOrders(asArray(r.data))).catch(() => toast.error('Failed to load orders')).finally(() => setLoading(false));
   };
 
   useEffect(load, [statusFilter]);

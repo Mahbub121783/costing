@@ -42,6 +42,11 @@ export default function FinanceDashboard() {
   if (loading) return <div className="p-8 text-slate-400">Loading…</div>;
   if (!stats) return null;
 
+  const topBuyers = stats.topBuyers || [];
+  const expenseByCategory = stats.expenseByCategory || [];
+  const recentOrders = stats.recentOrders || [];
+  const recentExpenses = stats.recentExpenses || [];
+
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div>
@@ -65,11 +70,11 @@ export default function FinanceDashboard() {
           <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
             <ShoppingBag size={15} className="text-indigo-500" /> Top Buyers (All Time)
           </h2>
-          {stats.topBuyers.length === 0 ? (
+          {topBuyers.length === 0 ? (
             <p className="text-sm text-slate-400">No order data yet</p>
           ) : (
             <div className="space-y-2">
-              {stats.topBuyers.map((b, i) => (
+              {topBuyers.map((b, i) => (
                 <div key={b.buyerId} className="flex items-center gap-3">
                   <span className="w-5 text-xs font-medium text-slate-400">{i + 1}</span>
                   <div className="flex-1 min-w-0">
@@ -87,11 +92,11 @@ export default function FinanceDashboard() {
           <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
             <TrendingDown size={15} className="text-red-400" /> Expense Breakdown (This Month)
           </h2>
-          {stats.expenseByCategory.length === 0 ? (
+          {expenseByCategory.length === 0 ? (
             <p className="text-sm text-slate-400">No expenses this month</p>
           ) : (
             <div className="space-y-2">
-              {stats.expenseByCategory.map((e) => (
+              {expenseByCategory.map((e) => (
                 <div key={e.category} className="flex items-center justify-between">
                   <span className="text-sm text-slate-600">{CATEGORY_LABELS[e.category] || e.category}</span>
                   <span className="text-sm font-semibold text-slate-800">{fmt(e.total)}</span>
@@ -106,9 +111,9 @@ export default function FinanceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <h2 className="text-sm font-semibold text-slate-700 mb-4">Recent Orders</h2>
-          {stats.recentOrders.length === 0 ? <p className="text-sm text-slate-400">No orders yet</p> : (
+          {recentOrders.length === 0 ? <p className="text-sm text-slate-400">No orders yet</p> : (
             <div className="space-y-2">
-              {stats.recentOrders.map((o) => (
+              {recentOrders.map((o) => (
                 <div key={o.id} className="flex items-center justify-between text-sm">
                   <div>
                     <p className="font-medium text-slate-800">{o.orderNo}</p>
@@ -116,7 +121,7 @@ export default function FinanceDashboard() {
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-slate-700">{fmt(o.totalGoodsValue)}</p>
-                    <span className={`badge badge-${o.paymentStatus.toLowerCase()}`}>{o.paymentStatus}</span>
+                    <span className={`badge badge-${(o.paymentStatus || '').toLowerCase()}`}>{o.paymentStatus}</span>
                   </div>
                 </div>
               ))}
@@ -126,9 +131,9 @@ export default function FinanceDashboard() {
 
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <h2 className="text-sm font-semibold text-slate-700 mb-4">Recent Expenses</h2>
-          {stats.recentExpenses.length === 0 ? <p className="text-sm text-slate-400">No expenses yet</p> : (
+          {recentExpenses.length === 0 ? <p className="text-sm text-slate-400">No expenses yet</p> : (
             <div className="space-y-2">
-              {stats.recentExpenses.map((e) => (
+              {recentExpenses.map((e) => (
                 <div key={e.id} className="flex items-center justify-between text-sm">
                   <div>
                     <p className="font-medium text-slate-800 truncate max-w-[200px]">{e.description}</p>
@@ -136,7 +141,7 @@ export default function FinanceDashboard() {
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-slate-700">{fmt(e.amount)}</p>
-                    <span className={`badge badge-${e.status.toLowerCase()}`}>{e.status}</span>
+                    <span className={`badge badge-${(e.status || '').toLowerCase()}`}>{e.status}</span>
                   </div>
                 </div>
               ))}

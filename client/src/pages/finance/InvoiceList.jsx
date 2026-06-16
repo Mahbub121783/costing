@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 import toast from 'react-hot-toast';
 
 const fmt = (n) => `$${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
@@ -17,7 +17,7 @@ export default function InvoiceList() {
     const params = {};
     if (filters.invoiceType) params.invoiceType = filters.invoiceType;
     if (filters.status) params.status = filters.status;
-    api.get('/invoices', { params }).then((r) => setInvoices(r.data)).catch(() => toast.error('Failed to load')).finally(() => setLoading(false));
+    api.get('/invoices', { params }).then((r) => setInvoices(asArray(r.data))).catch(() => toast.error('Failed to load')).finally(() => setLoading(false));
   };
 
   useEffect(load, [filters]);

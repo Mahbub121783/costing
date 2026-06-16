@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 
 const CATEGORIES = ['Thread', 'Label', 'Button', 'Zipper', 'Elastic', 'Tape', 'Packaging', 'Other'];
 
@@ -16,7 +16,7 @@ export default function TrimLibraryPage() {
   const load = async () => {
     try {
       const { data } = await api.get('/trim-library', { params: { search, category } });
-      setItems(data.data);
+      setItems(asArray(data));
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to load trim library'); }
   };
 

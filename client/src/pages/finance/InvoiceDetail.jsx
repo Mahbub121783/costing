@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Printer } from 'lucide-react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 import toast from 'react-hot-toast';
 
 const fmt = (n) => `$${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
@@ -33,7 +33,8 @@ export default function InvoiceDetail() {
 
   useEffect(() => {
     Promise.all([api.get('/buyers'), api.get('/order-finance')])
-      .then(([b, o]) => { setBuyers(b.data.filter((x) => x.isActive)); setOrders(o.data); });
+      .then(([b, o]) => { setBuyers(asArray(b.data).filter((x) => x.isActive)); setOrders(asArray(o.data)); })
+      .catch(() => toast.error('Failed to load buyers/orders'));
     if (!isNew) {
       api.get(`/invoices/${id}`).then((r) => {
         setInvoice(r.data);
@@ -50,7 +51,7 @@ export default function InvoiceDetail() {
           notes: inv.notes || '',
           additionalCharges: String(inv.additionalCharges || 0),
           additionalChargesNote: inv.additionalChargesNote || '',
-          items: inv.items.map((it) => ({ description: it.description, quantity: String(it.quantity), unitPrice: String(it.unitPrice) })),
+          items: (inv.items || []).map((it) => ({ description: it.description, quantity: String(it.quantity), unitPrice: String(it.unitPrice) })),
         });
       }).catch(() => toast.error('Failed to load'));
     }

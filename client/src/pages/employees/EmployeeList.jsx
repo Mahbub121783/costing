@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, UserSquare } from 'lucide-react';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 import toast from 'react-hot-toast';
 
 const STATUS_COLORS = { ACTIVE: 'badge-active', INACTIVE: 'badge-pending', TERMINATED: 'badge-terminated' };
@@ -17,7 +17,7 @@ export default function EmployeeList() {
     const params = {};
     if (statusFilter) params.status = statusFilter;
     api.get('/employees', { params })
-      .then((r) => setEmployees(r.data))
+      .then((r) => setEmployees(asArray(r.data)))
       .catch(() => toast.error('Failed to load'))
       .finally(() => setLoading(false));
   }, [statusFilter]);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 
 export default function FactoriesPage() {
   const [items, setItems] = useState([]);
@@ -12,7 +12,7 @@ export default function FactoriesPage() {
   const load = async () => {
     try {
       const { data } = await api.get('/factories');
-      setItems(data.data);
+      setItems(asArray(data));
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to load factories'); }
   };
   useEffect(() => { load(); }, []);

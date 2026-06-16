@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 import toast from 'react-hot-toast';
 
 const STATUS_COLORS = { DRAFT: 'badge-pending', FINALIZED: 'badge-partial', PAID: 'badge-paid' };
@@ -63,7 +63,7 @@ export default function PayrollList() {
   const [showModal, setShowModal] = useState(false);
 
   const load = () => {
-    api.get('/payroll').then((r) => setPayrolls(r.data)).catch(() => toast.error('Failed to load')).finally(() => setLoading(false));
+    api.get('/payroll').then((r) => setPayrolls(asArray(r.data))).catch(() => toast.error('Failed to load')).finally(() => setLoading(false));
   };
   useEffect(load, []);
 

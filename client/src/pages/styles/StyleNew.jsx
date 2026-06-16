@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { X, Plus, LayoutGrid } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 
 const PRESET_SIZES = {
   "Kids (Children's)": ['3Y-4Y', '5Y-6Y', '7Y-8Y', '9Y-10Y', '11Y-12Y', '13Y-14Y', '15Y-16Y'],
@@ -25,8 +25,8 @@ export default function StyleNew() {
   useEffect(() => {
     Promise.all([api.get('/buyers'), api.get('/factories')])
       .then(([b, f]) => {
-        setBuyers(b.data.data);
-        setFactories(f.data.data);
+        setBuyers(asArray(b.data));
+        setFactories(asArray(f.data));
       })
       .catch(() => toast.error('Failed to load buyers/factories'));
   }, []);

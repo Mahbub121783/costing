@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 
 export default function BuyersPage() {
   const [buyers, setBuyers] = useState([]);
@@ -12,7 +12,7 @@ export default function BuyersPage() {
   const load = async () => {
     try {
       const { data } = await api.get('/buyers');
-      setBuyers(data.data);
+      setBuyers(asArray(data));
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to load buyers'); }
   };
   useEffect(() => { load(); }, []);

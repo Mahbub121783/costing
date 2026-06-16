@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import api from '../../lib/api';
+import api, { asArray, asData } from '../../lib/api';
 import toast from 'react-hot-toast';
 
 const STATUS_COLORS = { ACTIVE: 'badge-active', INACTIVE: 'badge-pending', TERMINATED: 'badge-terminated' };
@@ -139,7 +139,9 @@ export default function EmployeeDetail() {
     Promise.all([
       api.get(`/employees/${id}`),
       api.get(`/employees/${id}/expenses`),
-    ]).then(([e, ex]) => { setEmp(e.data); setExpenses(ex.data); }).finally(() => setLoading(false));
+    ]).then(([e, ex]) => { setEmp(asData(e.data)); setExpenses(asArray(ex.data)); })
+      .catch(() => toast.error('Failed to load employee'))
+      .finally(() => setLoading(false));
   };
 
   useEffect(load, [id]);

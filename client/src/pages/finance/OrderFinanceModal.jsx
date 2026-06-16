@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X } from 'lucide-react';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 import toast from 'react-hot-toast';
 
 const schema = z.object({
@@ -26,7 +26,8 @@ export default function OrderFinanceModal({ onClose, onSaved }) {
 
   useEffect(() => {
     Promise.all([api.get('/order-finance/approved-costings'), api.get('/buyers')])
-      .then(([c, b]) => { setCostings(c.data); setBuyers(b.data.filter((x) => x.isActive)); });
+      .then(([c, b]) => { setCostings(asArray(c.data)); setBuyers(asArray(b.data).filter((x) => x.isActive)); })
+      .catch(() => toast.error('Failed to load form data'));
   }, []);
 
   const onSubmit = async (data) => {

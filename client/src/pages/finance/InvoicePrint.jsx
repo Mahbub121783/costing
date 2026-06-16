@@ -66,7 +66,7 @@ export default function InvoicePrint() {
           </tr>
         </thead>
         <tbody>
-          {inv.items.map((it, i) => (
+          {(inv.items || []).map((it, i) => (
             <tr key={it.id} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
               <td className="px-4 py-2.5 text-slate-700">{it.description}</td>
               <td className="px-4 py-2.5 text-right text-slate-600">{fmt(it.quantity, 3)}</td>

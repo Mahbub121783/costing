@@ -7,7 +7,7 @@ import {
   AlertCircle, Lock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '../../lib/api';
+import api, { asData } from '../../lib/api';
 import { computeLiveFob, STATUS_COLORS } from '../../lib/utils';
 import LiveFobBar from '../../components/costing/LiveFobBar';
 import FabricTab from './tabs/FabricTab';
@@ -128,7 +128,7 @@ export default function CostingForm() {
   const loadCosting = useCallback(async () => {
     try {
       const { data } = await api.get(`/costings/${id}`);
-      const c = data.data;
+      const c = asData(data) || {};
       setCosting(c);
       setFobSummary(data.fobSummary);
       setShipmentCalc(data.shipmentCalc);

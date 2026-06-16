@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Layers, ChevronRight, LayoutGrid, Trash2 } from 'lucide-react';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 import toast from 'react-hot-toast';
 
 const STATUS_CONFIG = {
@@ -30,7 +30,7 @@ export default function StyleList() {
     setLoading(true);
     try {
       const { data } = await api.get('/styles', { params: { search } });
-      setStyles(data.data || []);
+      setStyles(asArray(data));
     } catch { toast.error('Failed to load styles'); }
     finally { setLoading(false); }
   };

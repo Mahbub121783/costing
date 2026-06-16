@@ -39,6 +39,35 @@ const forceLogout = () => {
   }
 };
 
+// ── Response normalizers ─────────────────────────────────────────────────────
+// Backend list endpoints are inconsistent: some return a bare array (e.g.
+// /employees, /invoices), others wrap it as { success, data: [...] } (e.g.
+// /buyers, /users, /styles). Consuming code that guesses the shape wrong throws
+// "x.filter is not a function" / "x.map is not a function" and the whole page
+// crashes into the error boundary. These helpers make every consumer
+// shape-agnostic so a mismatch (or an error body) can never throw.
+
+/** Always returns an array, regardless of response shape. */
+export const asArray = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (payload && typeof payload === 'object' && Array.isArray(payload.data)) return payload.data;
+  return [];
+};
+
+/** Unwraps the standard { success, data } envelope; otherwise returns payload. */
+export const asData = (payload, fallback = null) => {
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    !Array.isArray(payload) &&
+    'data' in payload &&
+    'success' in payload
+  ) {
+    return payload.data ?? fallback;
+  }
+  return payload ?? fallback;
+};
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {

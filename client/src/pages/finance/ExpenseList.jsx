@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Check, DollarSign } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import api from '../../lib/api';
+import api, { asArray } from '../../lib/api';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 
@@ -89,7 +89,7 @@ export default function ExpenseList() {
     if (filters.status) params.status = filters.status;
     if (filters.month) params.month = filters.month;
     if (filters.year) params.year = filters.year;
-    api.get('/expenses', { params }).then((r) => setExpenses(r.data)).catch(() => toast.error('Failed')).finally(() => setLoading(false));
+    api.get('/expenses', { params }).then((r) => setExpenses(asArray(r.data))).catch(() => toast.error('Failed')).finally(() => setLoading(false));
   };
 
   useEffect(load, [filters]);
