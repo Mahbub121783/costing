@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 import AdminRoute from './components/ui/AdminRoute';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 import AppLayout from './components/layout/AppLayout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -32,8 +32,8 @@ import PayrollRun from './pages/payroll/PayrollRun';
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
-      <Toaster position="top-right" />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -81,5 +81,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }

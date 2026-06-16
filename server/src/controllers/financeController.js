@@ -1,4 +1,4 @@
-const prisma = require('../../generated');
+const prisma = require('../utils/prisma');
 
 async function getDashboardStats(req, res) {
   const now = new Date();

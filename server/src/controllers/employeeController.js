@@ -1,4 +1,4 @@
-const prisma = require('../../generated');
+const prisma = require('../utils/prisma');
 const { Prisma } = require('../../generated');
 
 const dec = (v) => (v === '' || v == null ? undefined : new Prisma.Decimal(v));

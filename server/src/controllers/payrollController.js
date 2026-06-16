@@ -1,4 +1,4 @@
-const prisma = require('../../generated');
+const prisma = require('../utils/prisma');
 const { Prisma } = require('../../generated');
 
 const dec = (v) => (v === '' || v == null ? undefined : new Prisma.Decimal(v));
@@ -37,7 +37,7 @@ async function generate(req, res) {
   const m = num(month);
   const y = num(year);
 
-  const existing = await prisma.monthlyPayroll.findUnique({ where: { month_year: { month: m, year: y } } });
+  const existing = await prisma.monthlyPayroll.findFirst({ where: { month: m, year: y } });
   if (existing) return res.status(409).json({ message: `Payroll for ${m}/${y} already exists` });
 
   const employees = await prisma.employee.findMany({
