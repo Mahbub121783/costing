@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Shield, Eye, Edit3, KeyRound, ToggleLeft, ToggleRight, X, Check, Building2, Phone, Briefcase } from 'lucide-react';
+import { Users, Shield, Eye, Edit3, KeyRound, ToggleLeft, ToggleRight, X, Check, Building2, Phone, Briefcase, UserCheck, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api, { asArray } from '../../lib/api';
 import useAuthStore from '../../store/authStore';
@@ -10,6 +10,14 @@ const ROLE_COLORS = {
   ADMIN: 'bg-violet-100 text-violet-700 border-violet-200',
   MERCHANDISER: 'bg-indigo-100 text-indigo-700 border-indigo-200',
   VIEWER: 'bg-slate-100 text-slate-600 border-slate-200',
+  SUPPLIER: 'bg-teal-100 text-teal-700 border-teal-200',
+};
+
+const STATUS_BADGE = {
+  PENDING: 'bg-amber-100 text-amber-700',
+  ACTIVE: 'bg-emerald-100 text-emerald-700',
+  REJECTED: 'bg-red-100 text-red-600',
+  SUSPENDED: 'bg-slate-200 text-slate-600',
 };
 
 function Modal({ title, children, onClose }) {
@@ -41,6 +49,9 @@ export default function UsersPage() {
 
   // Edit form
   const [editForm, setEditForm] = useState({ name: '', role: '', company: '', phone: '', designation: '' });
+
+  // Per-row role selection for pending approvals (defaults to MERCHANDISER)
+  const [approveRole, setApproveRole] = useState({});
 
   const load = async () => {
     try {
@@ -110,7 +121,29 @@ export default function UsersPage() {
     }
   };
 
-  const totalActive = users.filter((u) => u.isActive).length;
+  const approveUser = async (u, role) => {
+    try {
+      await api.put(`/users/${u.id}/approve`, { role });
+      toast.success(`${u.name} approved as ${role}`);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Approve failed');
+    }
+  };
+
+  const rejectUser = async (u) => {
+    if (!window.confirm(`Reject ${u.name}'s registration? They will not be able to sign in.`)) return;
+    try {
+      await api.put(`/users/${u.id}/reject`);
+      toast.success(`${u.name} rejected`);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Reject failed');
+    }
+  };
+
+  const pending = users.filter((u) => u.status === 'PENDING');
+  const totalActive = users.filter((u) => u.status === 'ACTIVE').length;
   const totalAdmins = users.filter((u) => u.role === 'ADMIN').length;
 
   return (
@@ -124,6 +157,45 @@ export default function UsersPage() {
           <p className="text-slate-500 text-sm mt-0.5">Manage system users, roles, and access</p>
         </div>
       </div>
+
+      {/* Pending approvals */}
+      {pending.length > 0 && (
+        <div className="bg-amber-50 rounded-xl border border-amber-200 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-200">
+            <Clock size={16} className="text-amber-600" />
+            <h2 className="font-semibold text-amber-800 text-sm">Pending Approvals</h2>
+            <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-xs font-bold">{pending.length}</span>
+          </div>
+          <div className="divide-y divide-amber-100">
+            {pending.map((u) => {
+              const role = approveRole[u.id] || 'MERCHANDISER';
+              return (
+                <div key={u.id} className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-800 text-sm">{u.name}</p>
+                    <p className="text-slate-500 text-xs">{u.email}{u.company ? ` · ${u.company}` : ''}{u.designation ? ` · ${u.designation}` : ''}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <select
+                      value={role}
+                      onChange={(e) => setApproveRole((p) => ({ ...p, [u.id]: e.target.value }))}
+                      className="input input-sm w-36 text-sm"
+                    >
+                      {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                    <button onClick={() => approveUser(u, role)} className="btn-success btn-sm gap-1">
+                      <UserCheck size={13} /> Approve
+                    </button>
+                    <button onClick={() => rejectUser(u)} className="btn-secondary btn-sm text-red-600 gap-1">
+                      <X size={13} /> Reject
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
@@ -140,7 +212,7 @@ export default function UsersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
         {loading ? (
           <div className="p-10 text-center text-slate-400 text-sm">Loading users…</div>
         ) : (
@@ -198,11 +270,8 @@ export default function UsersPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                        u.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
-                      }`}>
-                        {u.isActive ? <Check size={10} /> : <X size={10} />}
-                        {u.isActive ? 'Active' : 'Inactive'}
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[u.status] || STATUS_BADGE.ACTIVE}`}>
+                        {u.status || (u.isActive ? 'ACTIVE' : 'SUSPENDED')}
                       </span>
                     </td>
                     <td className="px-4 py-3">

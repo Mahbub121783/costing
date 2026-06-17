@@ -4,7 +4,14 @@
 -- ── ENUMS ────────────────────────────────────────────────────────────────────
 
 DO $$ BEGIN
-  CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'MERCHANDISER', 'VIEWER');
+  CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'MERCHANDISER', 'VIEWER', 'SUPPLIER');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+-- NOTE: adding 'SUPPLIER' to an EXISTING "UserRole" enum is handled by the
+-- separate-statement migration in setup.js (ALTER TYPE ... ADD VALUE cannot run
+-- inside this multi-statement transaction).
+
+DO $$ BEGIN
+  CREATE TYPE "UserStatus" AS ENUM ('PENDING', 'ACTIVE', 'REJECTED', 'SUSPENDED');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
@@ -31,10 +38,15 @@ CREATE TABLE IF NOT EXISTS "users" (
   "email"         VARCHAR(255) NOT NULL UNIQUE,
   "password_hash" VARCHAR(255) NOT NULL,
   "role"          "UserRole"   NOT NULL DEFAULT 'MERCHANDISER',
+  "status"        "UserStatus" NOT NULL DEFAULT 'ACTIVE',
   "is_active"     BOOLEAN      NOT NULL DEFAULT true,
   "created_at"    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   "updated_at"    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
+-- Backfill column on already-existing "users" tables. Default ACTIVE keeps
+-- current users (incl. admin) unlocked; new self-registrations are set to
+-- PENDING explicitly by the register controller.
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "status" "UserStatus" NOT NULL DEFAULT 'ACTIVE';
 
 CREATE TABLE IF NOT EXISTS "refresh_tokens" (
   "id"         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),

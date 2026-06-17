@@ -42,8 +42,8 @@ export default function OrderFinanceList() {
         </button>
       </div>
 
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[180px] max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Order no, buyer, style…" className="input pl-8 text-sm" />
         </div>
@@ -55,7 +55,7 @@ export default function OrderFinanceList() {
         </select>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
         {loading ? (
           <div className="p-8 text-center text-slate-400">Loading…</div>
         ) : filtered.length === 0 ? (

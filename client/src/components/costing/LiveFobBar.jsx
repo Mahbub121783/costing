@@ -21,7 +21,7 @@ export default function LiveFobBar({ liveFob, sizes }) {
   const hasFob = sizes.some((s) => liveFob?.[s]?.fob > 0);
 
   return (
-    <div className="fixed bottom-0 left-60 right-0 z-50 bg-[#0b1120] border-t border-slate-700/80 shadow-2xl">
+    <div className="fixed bottom-0 left-0 lg:left-60 right-0 z-50 bg-[#0b1120] border-t border-slate-700/80 shadow-2xl">
       {/* Toggle button */}
       <button
         onClick={() => setExpanded((e) => !e)}

@@ -11,11 +11,17 @@ const useAuthStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const res = await api.post('/auth/register', data);
-      const { user, accessToken, refreshToken } = res.data;
+      const { user, accessToken, refreshToken, pending, message } = res.data;
+      // Self-registrations after the first user are PENDING and get no tokens —
+      // they must be approved by an admin before they can log in.
+      if (pending || !accessToken) {
+        return { pending: true, message };
+      }
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
       set({ user, isAuthenticated: true });
+      return { pending: false };
     } finally {
       set({ loading: false });
     }

@@ -32,7 +32,7 @@ export default function InvoiceList() {
         <Link to="/finance/invoices/new" className="btn-primary gap-1.5"><Plus size={15} /> New Invoice</Link>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <select value={filters.invoiceType} onChange={(e) => setFilters((f) => ({ ...f, invoiceType: e.target.value }))} className="input w-36 text-sm">
           <option value="">All Types</option>
           <option value="COMMERCIAL">Commercial</option>
@@ -49,7 +49,7 @@ export default function InvoiceList() {
         </select>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
         {loading ? <div className="p-8 text-center text-slate-400">Loading…</div> : invoices.length === 0 ? (
           <div className="p-8 text-center text-slate-400">No invoices found</div>
         ) : (

@@ -19,10 +19,10 @@ const protect = async (req, res, next) => {
 
   const user = await prisma.user.findUnique({
     where: { id: decoded.id },
-    select: { id: true, name: true, email: true, role: true, isActive: true, company: true, phone: true, designation: true },
+    select: { id: true, name: true, email: true, role: true, status: true, isActive: true, company: true, phone: true, designation: true },
   });
 
-  if (!user || !user.isActive) {
+  if (!user || !user.isActive || user.status !== 'ACTIVE') {
     res.status(401);
     throw new Error('Not authorized, user inactive or not found');
   }

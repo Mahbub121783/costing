@@ -144,7 +144,7 @@ export default function ExpenseList() {
         <input value={filters.year} onChange={(e) => setFilters((f) => ({ ...f, year: e.target.value }))} placeholder="Year" className="input w-24 text-sm" />
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
         {loading ? <div className="p-8 text-center text-slate-400">Loading…</div> : expenses.length === 0 ? (
           <div className="p-8 text-center text-slate-400">No expenses found</div>
         ) : (

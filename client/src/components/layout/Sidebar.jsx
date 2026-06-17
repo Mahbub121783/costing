@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Shirt, Users, Factory,
   LogOut, Layers, Scissors, ShieldCheck, UserCircle,
-  TrendingUp, ShoppingBag, FileText, Receipt, UserSquare, Wallet,
+  TrendingUp, ShoppingBag, FileText, Receipt, UserSquare, Wallet, X,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 
@@ -30,7 +30,7 @@ const ADMIN_NAV = [
   { to: '/admin/users', icon: ShieldCheck, label: 'User Management' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ open = false, onClose = () => {} }) {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'ADMIN';
@@ -39,9 +39,13 @@ export default function Sidebar() {
   const allNav = isAdmin ? [...NAV, ...ADMIN_NAV] : NAV;
 
   return (
-    <aside className="fixed inset-y-0 left-0 w-60 flex flex-col z-30 bg-[#0b1120]">
+    <aside
+      className={`fixed inset-y-0 left-0 w-60 flex flex-col z-40 bg-[#0b1120] transition-transform duration-200 ease-out lg:translate-x-0 ${
+        open ? 'translate-x-0' : '-translate-x-full'
+      }`}
+    >
       {/* Brand */}
-      <div className="px-4 py-4 border-b border-white/[0.07]">
+      <div className="px-4 py-4 border-b border-white/[0.07] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg flex-shrink-0">
             <Shirt size={18} className="text-white" />
@@ -51,6 +55,10 @@ export default function Sidebar() {
             <p className="text-slate-400 text-[11px] leading-tight">Garments Costing</p>
           </div>
         </div>
+        {/* Close (mobile only) */}
+        <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-white p-1" aria-label="Close menu">
+          <X size={18} />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -68,6 +76,7 @@ export default function Sidebar() {
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-all ${
                   isActive
@@ -86,7 +95,7 @@ export default function Sidebar() {
       {/* User */}
       <div className="px-2.5 py-3 border-t border-white/[0.07]">
         <button
-          onClick={() => navigate('/profile')}
+          onClick={() => { onClose(); navigate('/profile'); }}
           className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/[0.06] transition-colors text-left"
         >
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center flex-shrink-0">

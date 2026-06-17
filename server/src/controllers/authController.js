@@ -3,7 +3,7 @@ const prisma = require('../utils/prisma');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
 
 const SAFE_SELECT = {
-  id: true, name: true, email: true, role: true,
+  id: true, name: true, email: true, role: true, status: true,
   company: true, phone: true, designation: true, createdAt: true,
 };
 
@@ -16,9 +16,13 @@ const register = async (req, res) => {
     throw new Error('Email already registered');
   }
 
-  // First registered user automatically becomes ADMIN
+  // First registered user bootstraps the system: ADMIN + ACTIVE (auto login).
+  // Everyone else self-registers as MERCHANDISER + PENDING and must be approved
+  // by an admin before they can log in.
   const userCount = await prisma.user.count();
-  const role = userCount === 0 ? 'ADMIN' : 'MERCHANDISER';
+  const isFirstUser = userCount === 0;
+  const role = isFirstUser ? 'ADMIN' : 'MERCHANDISER';
+  const status = isFirstUser ? 'ACTIVE' : 'PENDING';
 
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
@@ -27,12 +31,23 @@ const register = async (req, res) => {
       email,
       passwordHash,
       role,
+      status,
+      isActive: isFirstUser,
       company: company || null,
       phone: phone || null,
       designation: designation || null,
     },
     select: SAFE_SELECT,
   });
+
+  // Pending users get no tokens — they cannot access the app until approved.
+  if (!isFirstUser) {
+    return res.status(201).json({
+      success: true,
+      pending: true,
+      message: 'Registration submitted. An admin will review and approve your account before you can log in.',
+    });
+  }
 
   const accessToken = generateAccessToken(user.id);
   const refreshToken = generateRefreshToken(user.id);
@@ -52,7 +67,7 @@ const login = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !user.isActive) {
+  if (!user) {
     res.status(401);
     throw new Error('Invalid credentials');
   }
@@ -61,6 +76,20 @@ const login = async (req, res) => {
   if (!match) {
     res.status(401);
     throw new Error('Invalid credentials');
+  }
+
+  // Gate on approval status — give a clear, actionable message per state.
+  if (user.status === 'PENDING') {
+    res.status(403);
+    throw new Error('Your account is awaiting admin approval.');
+  }
+  if (user.status === 'REJECTED') {
+    res.status(403);
+    throw new Error('Your registration was not approved. Please contact an administrator.');
+  }
+  if (user.status === 'SUSPENDED' || !user.isActive) {
+    res.status(403);
+    throw new Error('Your account is inactive. Please contact an administrator.');
   }
 
   const accessToken = generateAccessToken(user.id);

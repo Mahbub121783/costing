@@ -77,7 +77,7 @@ export default function PayrollList() {
         <button onClick={() => setShowModal(true)} className="btn-primary gap-1.5"><Plus size={15} /> Generate Payroll</button>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
         {loading ? <div className="p-8 text-center text-slate-400">Loading…</div> : payrolls.length === 0 ? (
           <div className="p-8 text-center text-slate-400">No payroll runs yet</div>
         ) : (

@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layers, User, Mail, Lock, ArrowRight, Building2, Phone, Briefcase, Shield } from 'lucide-react';
+import { Layers, User, Mail, Lock, ArrowRight, Building2, Phone, Briefcase, Shield, MailCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 
@@ -51,18 +52,38 @@ function PasswordStrength({ password = '' }) {
 export default function Register() {
   const { register: registerUser, loading } = useAuthStore();
   const navigate = useNavigate();
+  const [pendingMsg, setPendingMsg] = useState(null);
   const { register, handleSubmit, watch, formState: { errors } } = useForm({ resolver: zodResolver(schema) });
   const password = watch('password', '');
 
   const onSubmit = async ({ name, email, password, company, phone, designation }) => {
     try {
-      await registerUser({ name, email, password, company, phone, designation });
+      const result = await registerUser({ name, email, password, company, phone, designation });
+      if (result?.pending) {
+        setPendingMsg(result.message || 'Registration submitted. An admin will review and approve your account.');
+        return;
+      }
       toast.success('Account created successfully!');
       navigate('/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed');
     }
   };
+
+  if (pendingMsg) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-5">
+            <MailCheck size={26} className="text-emerald-600" />
+          </div>
+          <h1 className="text-xl font-bold text-slate-900">Registration submitted</h1>
+          <p className="text-slate-500 text-sm mt-2 leading-relaxed">{pendingMsg}</p>
+          <Link to="/login" className="btn-primary w-full justify-center mt-6">Back to Sign in</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -109,7 +130,7 @@ export default function Register() {
               <span className="text-slate-300 text-xs font-semibold">First user = Admin</span>
             </div>
             <p className="text-slate-500 text-xs leading-relaxed">
-              The first registered account automatically becomes the system administrator and can manage all other users.
+              The first registered account becomes the system administrator. Everyone who registers after that needs admin approval before they can sign in.
             </p>
           </div>
         </div>

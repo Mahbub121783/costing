@@ -15,6 +15,14 @@ enum UserRole {
   ADMIN
   MERCHANDISER
   VIEWER
+  SUPPLIER
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  SUSPENDED
 }
 
 enum CostingStatus {
@@ -113,8 +121,9 @@ model User {
   name         String   @db.VarChar(100)
   email        String   @unique @db.VarChar(255)
   passwordHash String   @map("password_hash") @db.VarChar(255)
-  role         UserRole @default(MERCHANDISER)
-  isActive     Boolean  @default(true) @map("is_active")
+  role         UserRole   @default(MERCHANDISER)
+  status       UserStatus @default(ACTIVE)
+  isActive     Boolean    @default(true) @map("is_active")
   company      String?  @db.VarChar(200)
   phone        String?  @db.VarChar(50)
   designation  String?  @db.VarChar(100)

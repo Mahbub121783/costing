@@ -1,0 +1,14 @@
+{
+  "name": "GCS — Garments Costing & Buyer ERP",
+  "short_name": "GCS",
+  "description": "Garment costing, finance, HR, suppliers and buyer ERP.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "icons": [
+    { "src": "/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

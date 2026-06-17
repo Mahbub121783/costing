@@ -27,6 +27,20 @@ require('dotenv').config({ path: path.join(serverDir, '.env') });
     const pgClient = new Client({ connectionString: DATABASE_URL });
     await pgClient.connect();
     await pgClient.query(sql);
+
+    // ── Step 1b: Enum-value migrations ────────────────────────────────────────
+    // `ALTER TYPE ... ADD VALUE` cannot run inside a transaction block, so it
+    // must NOT be part of the multi-statement create-tables.sql above. Each runs
+    // as its own autocommit statement here. Idempotent via IF NOT EXISTS (PG12+);
+    // the try/catch also tolerates older servers / already-present values.
+    const enumMigrations = [
+      `ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'SUPPLIER'`,
+    ];
+    for (const stmt of enumMigrations) {
+      try { await pgClient.query(stmt); }
+      catch (e) { console.log(`  (skip) ${stmt} — ${e.message}`); }
+    }
+
     await pgClient.end();
     console.log('✓ Tables created / already exist');
 
